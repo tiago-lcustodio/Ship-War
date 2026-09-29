@@ -28,8 +28,7 @@ from game_data import (
     SECRET_ROUTES,
     COMMON_DROP_CHANCE,
     COMMON_DROPS,
-    NAV_CHIP_DROP_CHANCE,
-    LEVELS
+    NAV_CHIP_DROP_CHANCE
 )
 
 
@@ -150,7 +149,9 @@ class LevelScene:
     # LOAD ASSETS
     # =====================================================
 
-    def load_assets(self):
+    def load_assets(
+        self
+    ):
 
         # =================================================
         # PLAYER
@@ -158,7 +159,8 @@ class LevelScene:
 
         ship_config = (
             SHIPS[
-                self.run_progress.ship_id
+                self.run_progress
+                .ship_id
             ]
         )
 
@@ -193,10 +195,6 @@ class LevelScene:
         )
 
 
-        # =================================================
-        # PRESERVE ASPECT RATIO
-        # =================================================
-
         original_width = (
             image.get_width()
         )
@@ -207,7 +205,9 @@ class LevelScene:
         )
 
 
-        if original_width <= 0:
+        if (
+            original_width <= 0
+        ):
 
             original_width = 1
 
@@ -215,6 +215,7 @@ class LevelScene:
         aspect_ratio = (
 
             original_height
+
             / original_width
         )
 
@@ -302,7 +303,7 @@ class LevelScene:
 
 
         # =================================================
-        # ENEMIES
+        # ENEMY IMAGES
         # =================================================
 
         self.enemy_images = {}
@@ -321,7 +322,7 @@ class LevelScene:
             )
 
 
-            enemy_path = (
+            path = (
                 ASSETS_DIR
                 / "enemies"
                 / enemy_config[
@@ -332,7 +333,7 @@ class LevelScene:
 
             image = (
                 pygame.image.load(
-                    str(enemy_path)
+                    str(path)
                 ).convert_alpha()
             )
 
@@ -344,6 +345,7 @@ class LevelScene:
                         enemy_config[
                             "width"
                         ],
+
                         enemy_config[
                             "height"
                         ]
@@ -354,7 +356,9 @@ class LevelScene:
 
             self.enemy_images[
                 enemy_id
-            ] = image
+            ] = (
+                image
+            )
 
 
         # =================================================
@@ -365,7 +369,8 @@ class LevelScene:
 
 
         if (
-            self.boss_id is not None
+            self.boss_id
+            is not None
 
             and self.boss_id
             in BOSS_TYPES
@@ -419,6 +424,7 @@ class LevelScene:
                         boss_config[
                             "width"
                         ],
+
                         boss_config[
                             "height"
                         ]
@@ -489,7 +495,7 @@ class LevelScene:
         )
 
 
-        background_path = (
+        path = (
             requested
             if requested.exists()
             else fallback
@@ -498,7 +504,7 @@ class LevelScene:
 
         raw_background = (
             pygame.image.load(
-                str(background_path)
+                str(path)
             ).convert()
         )
 
@@ -554,7 +560,9 @@ class LevelScene:
     # RESET
     # =====================================================
 
-    def reset(self):
+    def reset(
+        self
+    ):
 
         ship_config = (
             SHIPS[
@@ -651,7 +659,7 @@ class LevelScene:
 
 
         # =================================================
-        # NAV CORE
+        # CORE
         # =================================================
 
         self.core_piece_number = (
@@ -686,7 +694,7 @@ class LevelScene:
 
 
         # =================================================
-        # ROUTE / EXIT
+        # EXIT
         # =================================================
 
         self.secret_target = None
@@ -719,7 +727,8 @@ class LevelScene:
 
             self.first_play
 
-            and self.boss_id is not None
+            and self.boss_id
+            is not None
 
             and self.boss_id
             in BOSS_TYPES
@@ -820,6 +829,7 @@ class LevelScene:
             text
         )
 
+
         self.core_message_timer = (
             duration
         )
@@ -916,6 +926,7 @@ class LevelScene:
                 self.terminal_open = (
                     True
                 )
+
 
                 self.terminal_text = ""
 
@@ -1031,7 +1042,7 @@ class LevelScene:
 
 
         # =================================================
-        # TAB ROUTE
+        # SECRET ROUTE
         # =================================================
 
         if (
@@ -1080,10 +1091,6 @@ class LevelScene:
         )
 
 
-        # =================================================
-        # MONEY
-        # =================================================
-
         if (
             command
             == "need money"
@@ -1119,10 +1126,6 @@ class LevelScene:
             return
 
 
-        # =================================================
-        # COMPLETE HEALTH
-        # =================================================
-
         if (
             command
             == "complete health"
@@ -1149,10 +1152,6 @@ class LevelScene:
 
             return
 
-
-        # =================================================
-        # JUMP
-        # =================================================
 
         match = re.fullmatch(
 
@@ -1187,6 +1186,7 @@ class LevelScene:
             self.terminal_open = (
                 False
             )
+
 
             self.paused = (
                 False
@@ -1223,7 +1223,9 @@ class LevelScene:
         )
 
 
-        if route is None:
+        if (
+            route is None
+        ):
 
             self.show_message(
                 "NO HIDDEN ROUTE DETECTED"
@@ -1356,12 +1358,14 @@ class LevelScene:
         ):
 
             self.background_y1 += (
-                speed * dt
+                speed
+                * dt
             )
 
 
             self.background_y2 += (
-                speed * dt
+                speed
+                * dt
             )
 
 
@@ -1395,13 +1399,263 @@ class LevelScene:
         ):
 
             self.slow_background_y += (
-                speed * dt
+                speed
+                * dt
             )
 
 
             self.slow_background_y = min(
                 0,
                 self.slow_background_y
+            )
+
+
+    # =====================================================
+    # CREATE ONE ENEMY
+    # =====================================================
+
+    def create_enemy(
+        self,
+        enemy_id,
+        spawn_x=None,
+        spawn_y=-60,
+        movement_phase=None
+    ):
+
+        config = (
+            ENEMY_TYPES[
+                enemy_id
+            ]
+        )
+
+
+        enemy = Enemy(
+
+            image=
+            self.enemy_images[
+                enemy_id
+            ],
+
+            shot_image=
+            self.enemy_shot_image,
+
+            config=
+            config,
+
+            player_ref=
+            self.player,
+
+            spawn_x=
+            spawn_x,
+
+            spawn_y=
+            spawn_y,
+
+            movement_phase=
+            movement_phase
+        )
+
+
+        enemy.is_boss = (
+            False
+        )
+
+
+        self.enemies.add(
+            enemy
+        )
+
+
+        return enemy
+
+
+    # =====================================================
+    # SPAWN FORMATION
+    # =====================================================
+
+    def spawn_formation(
+        self,
+        enemy_id
+    ):
+
+        config = (
+            ENEMY_TYPES[
+                enemy_id
+            ]
+        )
+
+
+        available_slots = (
+
+            self.config[
+                "max_enemies"
+            ]
+
+            - len(
+                self.enemies
+            )
+        )
+
+
+        if (
+            available_slots <= 0
+        ):
+
+            return
+
+
+        minimum = (
+            config.get(
+                "formation_size_min",
+                3
+            )
+        )
+
+
+        maximum = (
+            config.get(
+                "formation_size_max",
+                5
+            )
+        )
+
+
+        desired = (
+            random.randint(
+                minimum,
+                maximum
+            )
+        )
+
+
+        count = min(
+            desired,
+            available_slots
+        )
+
+
+        # Não chama uma formação
+        # se só restou um slot.
+        if (
+            count < 2
+        ):
+
+            return
+
+
+        spacing = (
+            config.get(
+                "formation_spacing",
+                58
+            )
+        )
+
+
+        total_width = (
+
+            (count - 1)
+            * spacing
+        )
+
+
+        half_width = (
+            total_width / 2
+        )
+
+
+        margin = 55
+
+
+        center_min = (
+            margin
+            + half_width
+        )
+
+
+        center_max = (
+            SCREEN_WIDTH
+            - margin
+            - half_width
+        )
+
+
+        if (
+            center_max
+            <= center_min
+        ):
+
+            center_x = (
+                SCREEN_WIDTH / 2
+            )
+
+        else:
+
+            center_x = (
+                random.uniform(
+                    center_min,
+                    center_max
+                )
+            )
+
+
+        shared_phase = (
+            random.uniform(
+                0,
+                6.283185
+            )
+        )
+
+
+        for index in range(
+            count
+        ):
+
+            offset = (
+
+                (
+                    index
+                    - (count - 1) / 2
+                )
+
+                * spacing
+            )
+
+
+            spawn_x = (
+                center_x
+                + offset
+            )
+
+
+            # Pequeno V visual.
+            distance_from_center = abs(
+
+                index
+                - (count - 1) / 2
+            )
+
+
+            spawn_y = (
+
+                -55
+
+                - distance_from_center
+                * 18
+            )
+
+
+            self.create_enemy(
+
+                enemy_id,
+
+                spawn_x=
+                spawn_x,
+
+                spawn_y=
+                spawn_y,
+
+                movement_phase=
+                shared_phase
             )
 
 
@@ -1441,30 +1695,29 @@ class LevelScene:
         )
 
 
-        enemy = Enemy(
-
-            image=
-            self.enemy_images[
-                enemy_id
-            ],
-
-            shot_image=
-            self.enemy_shot_image,
-
-            config=
+        config = (
             ENEMY_TYPES[
                 enemy_id
             ]
         )
 
 
-        enemy.is_boss = (
-            False
-        )
+        if (
+            config.get(
+                "movement"
+            )
+            == "formation"
+        ):
+
+            self.spawn_formation(
+                enemy_id
+            )
+
+            return
 
 
-        self.enemies.add(
-            enemy
+        self.create_enemy(
+            enemy_id
         )
 
 
@@ -1476,7 +1729,9 @@ class LevelScene:
         self
     ):
 
-        if not self.should_have_boss:
+        if (
+            not self.should_have_boss
+        ):
 
             return
 
@@ -1502,7 +1757,10 @@ class LevelScene:
             self.enemy_shot_image,
 
             config=
-            boss_config
+            boss_config,
+
+            player_ref=
+            self.player
         )
 
 
@@ -1531,7 +1789,8 @@ class LevelScene:
         ):
 
             if (
-                enemy is not boss
+                enemy
+                is not boss
             ):
 
                 enemy.kill()
@@ -1707,7 +1966,9 @@ class LevelScene:
         enemy
     ):
 
-        if not enemy.alive():
+        if (
+            not enemy.alive()
+        ):
 
             return
 
@@ -1755,7 +2016,9 @@ class LevelScene:
         )
 
 
-        self.enemies_destroyed += 1
+        self.enemies_destroyed += (
+            1
+        )
 
 
         if is_boss:
@@ -1796,6 +2059,7 @@ class LevelScene:
             self.pickups.add(
 
                 Pickup(
+
                     pickup_type=
                     "nav_chip",
 
@@ -1803,6 +2067,7 @@ class LevelScene:
                     center
                 )
             )
+
 
             return
 
@@ -1869,6 +2134,7 @@ class LevelScene:
                         ]
                     )
                 )
+
 
                 break
 
@@ -1950,7 +2216,9 @@ class LevelScene:
                     .nav_chips < 7
                 ):
 
-                    self.run_progress.nav_chips += 1
+                    self.run_progress.nav_chips += (
+                        1
+                    )
 
 
                     self.show_message(
@@ -1974,7 +2242,7 @@ class LevelScene:
 
 
     # =====================================================
-    # PROJECTILE HIT
+    # PLAYER PROJECTILE HIT
     # =====================================================
 
     def handle_player_projectile_hit(
@@ -2013,6 +2281,7 @@ class LevelScene:
 
                 projectile.blast_radius
             )
+
 
             return
 
@@ -2082,7 +2351,9 @@ class LevelScene:
             )
 
 
-            if distance > radius:
+            if (
+                distance > radius
+            ):
 
                 continue
 
@@ -2134,9 +2405,7 @@ class LevelScene:
         )
 
 
-        activated = (
-            False
-        )
+        activated = False
 
 
         # =================================================
@@ -2144,11 +2413,12 @@ class LevelScene:
         # =================================================
 
         if (
-            kind
-            == "missile"
+            kind == "missile"
         ):
 
-            if not self.enemies:
+            if (
+                not self.enemies
+            ):
 
                 return
 
@@ -2204,9 +2474,7 @@ class LevelScene:
             )
 
 
-            activated = (
-                True
-            )
+            activated = True
 
 
         # =================================================
@@ -2257,9 +2525,7 @@ class LevelScene:
             )
 
 
-            activated = (
-                True
-            )
+            activated = True
 
 
         # =================================================
@@ -2267,8 +2533,7 @@ class LevelScene:
         # =================================================
 
         elif (
-            kind
-            == "emp"
+            kind == "emp"
         ):
 
             player_pos = (
@@ -2329,9 +2594,7 @@ class LevelScene:
                     )
 
 
-            activated = (
-                True
-            )
+            activated = True
 
 
         # =================================================
@@ -2351,9 +2614,7 @@ class LevelScene:
             )
 
 
-            activated = (
-                True
-            )
+            activated = True
 
 
         # =================================================
@@ -2365,7 +2626,9 @@ class LevelScene:
             == "chain_lightning"
         ):
 
-            if not self.enemies:
+            if (
+                not self.enemies
+            ):
 
                 return
 
@@ -2395,7 +2658,9 @@ class LevelScene:
             ]
 
 
-            if not candidates:
+            if (
+                not candidates
+            ):
 
                 return
 
@@ -2422,7 +2687,9 @@ class LevelScene:
             )
 
 
-            for enemy in targets:
+            for enemy in (
+                targets
+            ):
 
                 self.create_hit_spark(
                     enemy.rect.center
@@ -2450,9 +2717,7 @@ class LevelScene:
             )
 
 
-            activated = (
-                True
-            )
+            activated = True
 
 
         if activated:
@@ -2530,7 +2795,7 @@ class LevelScene:
 
 
     # =====================================================
-    # FINISH
+    # FINISH LEVEL
     # =====================================================
 
     def finish_level(
@@ -2549,11 +2814,6 @@ class LevelScene:
 
         # =================================================
         # REPLAY EARLY EXIT
-        # =================================================
-        #
-        # Faz animação bonita,
-        # mas não salva farm incompleto.
-        #
         # =================================================
 
         if (
@@ -2677,13 +2937,13 @@ class LevelScene:
         stats = {
 
             "enemies_destroyed":
-            self.enemies_destroyed,
+                self.enemies_destroyed,
 
             "money_earned":
-            (
-                self.player.money
-                - self.money_at_start
-            )
+                (
+                    self.player.money
+                    - self.money_at_start
+                )
         }
 
 
@@ -2700,7 +2960,7 @@ class LevelScene:
                 stats,
 
                 first_clear=
-                first_clear
+                    first_clear
             )
         )
 
@@ -2881,7 +3141,7 @@ class LevelScene:
 
 
             # =================================================
-            # FIRE
+            # PLAYER FIRE
             # =================================================
 
             mouse = (
@@ -2949,15 +3209,24 @@ class LevelScene:
                 self.enemies
             ):
 
-                if enemy.can_shoot():
+                if not (
+                    enemy.can_shoot()
+                ):
 
-                    projectile = (
-                        enemy.shoot()
-                    )
+                    continue
 
+
+                shots = (
+                    enemy.shoot()
+                )
+
+
+                if (
+                    shots
+                ):
 
                     self.enemy_shots.add(
-                        projectile
+                        *shots
                     )
 
 
@@ -3040,7 +3309,8 @@ class LevelScene:
                 if damaged:
 
                     self.create_hit_spark(
-                        self.player.rect.center
+                        self.player
+                        .rect.center
                     )
 
 
@@ -3056,7 +3326,7 @@ class LevelScene:
 
 
             # =================================================
-            # ENEMY x PLAYER
+            # ENEMY BODY x PLAYER
             # =================================================
 
             for enemy in list(
@@ -3123,7 +3393,7 @@ class LevelScene:
 
 
             # =================================================
-            # DEATH
+            # PLAYER DEATH
             # =================================================
 
             if (
@@ -3131,7 +3401,8 @@ class LevelScene:
             ):
 
                 self.create_explosion(
-                    self.player.rect.center
+                    self.player
+                    .rect.center
                 )
 
 
@@ -3152,7 +3423,7 @@ class LevelScene:
 
 
             # =================================================
-            # COMPLETE TIMER
+            # LEVEL COMPLETE
             # =================================================
 
             if (
@@ -3216,11 +3487,13 @@ class LevelScene:
             self.player.rect.center = (
 
                 round(
-                    self.player.position.x
+                    self.player
+                    .position.x
                 ),
 
                 round(
-                    self.player.position.y
+                    self.player
+                    .position.y
                 )
             )
 
@@ -3612,14 +3885,16 @@ class LevelScene:
         )
 
 
+        # =================================================
+        # PLAYER
+        # =================================================
+
         if (
             self.state
             != "dying"
         ):
 
-            draw_player = (
-                True
-            )
+            draw_player = True
 
 
             if (
@@ -3637,6 +3912,7 @@ class LevelScene:
                     )
 
                     % 2
+
                     == 0
                 )
 
@@ -3648,6 +3924,10 @@ class LevelScene:
                     self.player.rect
                 )
 
+
+        # =================================================
+        # SCREEN SHAKE
+        # =================================================
 
         offset_x = 0
         offset_y = 0
@@ -3702,19 +3982,12 @@ class LevelScene:
             == "intro"
         ):
 
-            level_name = (
-                self.config[
-                    "name"
-                ]
-            )
-
-
             text = (
                 self.medium_font.render(
                     (
                         f"LEVEL {self.level_number}"
                         " - "
-                        f"{level_name}"
+                        f"{self.config['name']}"
                     ),
                     True,
                     (
@@ -3784,8 +4057,6 @@ class LevelScene:
             )
 
 
-            # Caso seja muito grande,
-            # reduz automaticamente.
             max_width = (
                 SCREEN_WIDTH - 40
             )
@@ -3799,12 +4070,8 @@ class LevelScene:
                 scale = (
 
                     max_width
+
                     / text.get_width()
-                )
-
-
-                new_width = (
-                    max_width
                 )
 
 
@@ -3823,7 +4090,7 @@ class LevelScene:
                     pygame.transform.smoothscale(
                         text,
                         (
-                            new_width,
+                            max_width,
                             new_height
                         )
                     )
