@@ -26,13 +26,16 @@ class LevelCompleteScene:
             progress
         )
 
+
         self.completed_level = (
             completed_level
         )
 
+
         self.stats = (
             stats
         )
+
 
         self.first_clear = (
             first_clear
@@ -64,6 +67,45 @@ class LevelCompleteScene:
         )
 
 
+        self.small_font = (
+            pygame.font.SysFont(
+                "couriernew",
+                14,
+                bold=True
+            )
+        )
+
+
+        self.continue_rect = (
+            pygame.Rect(
+                230,
+                545,
+                260,
+                50
+            )
+        )
+
+
+    # =====================================================
+    # CONTINUE
+    # =====================================================
+
+    def continue_game(
+        self
+    ):
+
+        self.game.after_level_complete(
+
+            self.completed_level,
+
+            self.first_clear
+        )
+
+
+    # =====================================================
+    # EVENTS
+    # =====================================================
+
     def handle_event(
         self,
         event
@@ -71,31 +113,40 @@ class LevelCompleteScene:
 
         if (
             event.type
-            != pygame.KEYDOWN
+            == pygame.KEYDOWN
         ):
 
-            return
+            if event.key in (
+                pygame.K_RETURN,
+                pygame.K_SPACE
+            ):
+
+                self.continue_game()
 
 
-        if event.key in (
-            pygame.K_RETURN,
-            pygame.K_SPACE
-        ):
+            elif (
+                event.key
+                == pygame.K_ESCAPE
+            ):
 
-            self.game.after_level_complete(
-
-                self.completed_level,
-
-                self.first_clear
-            )
+                self.game.show_map()
 
 
         elif (
-            event.key
-            == pygame.K_ESCAPE
+            event.type
+            == pygame.MOUSEBUTTONDOWN
+
+            and event.button == 1
         ):
 
-            self.game.show_map()
+            if (
+                self.continue_rect
+                .collidepoint(
+                    event.pos
+                )
+            ):
+
+                self.continue_game()
 
 
     def update(
@@ -206,7 +257,7 @@ class LevelCompleteScene:
             enemies.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    170
+                    175
                 )
             )
         )
@@ -215,7 +266,7 @@ class LevelCompleteScene:
         earned = (
             self.font.render(
                 (
-                    "MONEY EARNED: $ "
+                    "CREDITS EARNED: "
                     f"{self.stats['money_earned']}"
                 ),
                 True,
@@ -233,7 +284,7 @@ class LevelCompleteScene:
             earned.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    210
+                    215
                 )
             )
         )
@@ -260,7 +311,7 @@ class LevelCompleteScene:
             core.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    260
+                    265
                 )
             )
         )
@@ -314,25 +365,35 @@ class LevelCompleteScene:
         )
 
 
-        text = (
+        pygame.draw.rect(
+            screen,
+            (
+                55,
+                75,
+                70
+            ),
+            self.continue_rect,
+            border_radius=6
+        )
+
+
+        button = (
             self.font.render(
-                "PRESS ENTER",
+                "CONTINUE",
                 True,
                 (
                     245,
-                    205,
-                    100
+                    215,
+                    120
                 )
             )
         )
 
 
         screen.blit(
-            text,
-            text.get_rect(
-                center=(
-                    SCREEN_WIDTH // 2,
-                    570
-                )
+            button,
+            button.get_rect(
+                center=
+                self.continue_rect.center
             )
         )

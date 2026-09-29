@@ -1,8 +1,7 @@
 import pygame
 
 from settings import (
-    SCREEN_WIDTH,
-    SCREEN_HEIGHT
+    SCREEN_WIDTH
 )
 
 
@@ -17,10 +16,11 @@ class GameOverScene:
 
         self.game = game
 
-        # Snapshot feito antes de entrar na fase.
+
         self.retry_progress = (
             retry_progress.clone()
         )
+
 
         self.level_number = (
             level_number
@@ -63,102 +63,154 @@ class GameOverScene:
         )
 
 
+        self.option_rects = []
+
+
     # =====================================================
-    # EVENTS
+    # SELECT
     # =====================================================
 
-    def handle_event(self, event):
+    def activate(
+        self,
+        option
+    ):
 
         if (
-            event.type
-            != pygame.KEYDOWN
-        ):
-
-            return
-
-
-        if (
-            event.key
-            == pygame.K_UP
-        ):
-
-            self.selected = (
-
-                self.selected - 1
-
-            ) % len(
-                self.options
-            )
-
-
-        elif (
-            event.key
-            == pygame.K_DOWN
-        ):
-
-            self.selected = (
-
-                self.selected + 1
-
-            ) % len(
-                self.options
-            )
-
-
-        elif event.key in (
-            pygame.K_RETURN,
-            pygame.K_SPACE
-        ):
-
-            option = (
-                self.options[
-                    self.selected
-                ]
-            )
-
-
-            if option == "RETRY":
-
-                # Restaura exatamente o estado
-                # anterior à tentativa.
-                self.game.progress = (
-                    self.retry_progress.clone()
-                )
-
-                # Retry direto.
-                # Não mostra o briefing novamente
-                # dentro da mesma tentativa.
-                self.game.launch_level(
-                    self.level_number
-                )
-
-
-            elif option == "MAP":
-
-                self.game.progress = (
-                    self.retry_progress.clone()
-                )
-
-                self.game.progress.next_level = (
-                    self.level_number
-                )
-
-                self.game.show_map()
-
-
-        elif (
-            event.key
-            == pygame.K_ESCAPE
+            option
+            == "RETRY"
         ):
 
             self.game.progress = (
-                self.retry_progress.clone()
+                self.retry_progress
+                .clone()
             )
+
+
+            self.game.launch_level(
+                self.level_number
+            )
+
+
+        elif (
+            option
+            == "MAP"
+        ):
+
+            self.game.progress = (
+                self.retry_progress
+                .clone()
+            )
+
+
+            self.game.progress.next_level = (
+                self.level_number
+            )
+
 
             self.game.show_map()
 
 
-    def update(self, dt):
+    # =====================================================
+    # EVENT
+    # =====================================================
+
+    def handle_event(
+        self,
+        event
+    ):
+
+        if (
+            event.type
+            == pygame.KEYDOWN
+        ):
+
+            if (
+                event.key
+                == pygame.K_UP
+            ):
+
+                self.selected = (
+
+                    self.selected - 1
+
+                ) % len(
+                    self.options
+                )
+
+
+            elif (
+                event.key
+                == pygame.K_DOWN
+            ):
+
+                self.selected = (
+
+                    self.selected + 1
+
+                ) % len(
+                    self.options
+                )
+
+
+            elif event.key in (
+                pygame.K_RETURN,
+                pygame.K_SPACE
+            ):
+
+                self.activate(
+                    self.options[
+                        self.selected
+                    ]
+                )
+
+
+            elif (
+                event.key
+                == pygame.K_ESCAPE
+            ):
+
+                self.activate(
+                    "MAP"
+                )
+
+
+        elif (
+            event.type
+            == pygame.MOUSEBUTTONDOWN
+
+            and event.button == 1
+        ):
+
+            for (
+                index,
+                rect
+            ) in enumerate(
+                self.option_rects
+            ):
+
+                if rect.collidepoint(
+                    event.pos
+                ):
+
+                    self.selected = (
+                        index
+                    )
+
+
+                    self.activate(
+                        self.options[
+                            index
+                        ]
+                    )
+
+
+                    return
+
+
+    def update(
+        self,
+        dt
+    ):
 
         pass
 
@@ -167,7 +219,10 @@ class GameOverScene:
     # DRAW
     # =====================================================
 
-    def draw(self, screen):
+    def draw(
+        self,
+        screen
+    ):
 
         screen.fill(
             (
@@ -205,7 +260,7 @@ class GameOverScene:
         subtitle = (
             self.small_font.render(
                 (
-                    "Mission progress from this "
+                    "Progress from this "
                     "attempt was lost."
                 ),
                 True,
@@ -229,6 +284,9 @@ class GameOverScene:
         )
 
 
+        self.option_rects = []
+
+
         for (
             index,
             option
@@ -236,8 +294,42 @@ class GameOverScene:
             self.options
         ):
 
+            rect = pygame.Rect(
+                240,
+                310
+                + index * 70,
+                240,
+                48
+            )
+
+
+            self.option_rects.append(
+                rect
+            )
+
+
             selected = (
-                index == self.selected
+                index
+                == self.selected
+            )
+
+
+            pygame.draw.rect(
+                screen,
+                (
+                    60,
+                    65,
+                    68
+                )
+                if not selected
+                else
+                (
+                    75,
+                    85,
+                    70
+                ),
+                rect,
+                border_radius=6
             )
 
 
@@ -259,16 +351,9 @@ class GameOverScene:
             )
 
 
-            prefix = (
-                "> "
-                if selected
-                else "  "
-            )
-
-
             text = (
                 self.font.render(
-                    prefix + option,
+                    option,
                     True,
                     color
                 )
@@ -278,10 +363,6 @@ class GameOverScene:
             screen.blit(
                 text,
                 text.get_rect(
-                    center=(
-                        SCREEN_WIDTH // 2,
-                        340
-                        + index * 60
-                    )
+                    center=rect.center
                 )
             )

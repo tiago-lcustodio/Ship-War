@@ -7,17 +7,22 @@ from settings import (
     ASSETS_DIR
 )
 
+from game_data import (
+    LEVELS,
+    PRIMARY_WEAPONS,
+    SECONDARY_WEAPONS,
+    DEFENSE_MODULES
+)
+
 
 class RetroHUD:
 
-    def __init__(
-        self
-    ):
+    def __init__(self):
 
         self.font = (
             pygame.font.SysFont(
                 "couriernew",
-                20,
+                14,
                 bold=True
             )
         )
@@ -26,7 +31,16 @@ class RetroHUD:
         self.small_font = (
             pygame.font.SysFont(
                 "couriernew",
-                14,
+                11,
+                bold=True
+            )
+        )
+
+
+        self.tiny_font = (
+            pygame.font.SysFont(
+                "couriernew",
+                10,
                 bold=True
             )
         )
@@ -50,45 +64,62 @@ class RetroHUD:
 
             if path.exists():
 
-                image = pygame.image.load(
-                    str(path)
-                ).convert_alpha()
+                image = (
+                    pygame.image.load(
+                        str(path)
+                    ).convert_alpha()
+                )
 
 
                 image = (
                     pygame.transform.smoothscale(
                         image,
                         (
-                            70,
-                            88
+                            64,
+                            64
                         )
                     )
                 )
 
+
             else:
 
-                # Placeholder temporário.
                 image = pygame.Surface(
                     (
-                        70,
-                        88
+                        64,
+                        64
                     ),
                     pygame.SRCALPHA
                 )
 
 
+                pygame.draw.circle(
+                    image,
+                    (
+                        165,
+                        185,
+                        180
+                    ),
+                    (
+                        32,
+                        32
+                    ),
+                    25
+                )
+
+
                 pygame.draw.ellipse(
                     image,
                     (
-                        150,
-                        160,
-                        155
+                        20,
+                        25,
+                        25
                     ),
                     (
-                        13,
-                        6,
-                        44,
-                        65
+                        17,
+                        22,
+                        12,
+                        18
                     )
                 )
 
@@ -98,29 +129,13 @@ class RetroHUD:
                     (
                         20,
                         25,
-                        24
+                        25
                     ),
                     (
-                        18,
-                        25,
-                        13,
-                        22
-                    )
-                )
-
-
-                pygame.draw.ellipse(
-                    image,
-                    (
-                        20,
-                        25,
-                        24
-                    ),
-                    (
-                        39,
-                        25,
-                        13,
-                        22
+                        35,
+                        22,
+                        12,
+                        18
                     )
                 )
 
@@ -130,12 +145,15 @@ class RetroHUD:
             ] = image
 
 
-    def get_nihl_mood(
+    # =====================================================
+    # MOOD
+    # =====================================================
+
+    def get_mood(
         self,
         player
     ):
 
-        # Vida cheia.
         if (
             player.hp
             == player.max_hp
@@ -144,8 +162,9 @@ class RetroHUD:
             return "happy"
 
 
-        # Próximo tiro mata.
-        if player.hp <= 1:
+        if (
+            player.hp <= 1
+        ):
 
             return "sad"
 
@@ -153,22 +172,53 @@ class RetroHUD:
         return "neutral"
 
 
+    # =====================================================
+    # SPECIAL MARK
+    # =====================================================
+
+    def special_suffix(
+        self,
+        config
+    ):
+
+        if config.get(
+            "special",
+            False
+        ):
+
+            return " *"
+
+        return ""
+
+
+    # =====================================================
+    # DRAW
+    # =====================================================
+
     def draw(
         self,
         screen,
         player,
         level_number,
-        nav_core_parts
+        nav_core_parts,
+        nav_chips=0
     ):
 
-        # ==================================
-        # HUD SUPERIOR
-        # ==================================
+        level_name = (
+            LEVELS[
+                level_number
+            ]["name"]
+        )
+
+
+        # =================================================
+        # TOP HUD
+        # =================================================
 
         top_panel = pygame.Surface(
             (
                 SCREEN_WIDTH,
-                55
+                34
             ),
             pygame.SRCALPHA
         )
@@ -176,123 +226,159 @@ class RetroHUD:
 
         top_panel.fill(
             (
+                5,
+                10,
                 12,
-                22,
-                24,
-                215
+                190
             )
         )
 
 
         screen.blit(
             top_panel,
-            (0, 0)
-        )
-
-
-        pygame.draw.line(
-            screen,
-            (
-                210,
-                190,
-                120
-            ),
             (
                 0,
-                54
-            ),
-            (
-                SCREEN_WIDTH,
-                54
-            ),
-            2
+                0
+            )
         )
 
 
-        hp = (
+        hull = (
             self.font.render(
                 (
-                    f"HP "
+                    "HULL "
                     f"{player.hp}/"
                     f"{player.max_hp}"
                 ),
                 True,
                 (
+                    120,
                     240,
-                    225,
-                    175
+                    170
                 )
             )
         )
 
 
         screen.blit(
-            hp,
+            hull,
             (
-                15,
-                7
+                12,
+                9
             )
         )
 
 
-        money = (
+        x = 125
+
+
+        if (
+            player.shield_capacity
+            > 0
+        ):
+
+            shield = (
+                self.font.render(
+                    (
+                        "SHIELD "
+                        f"{player.shield_points}/"
+                        f"{player.shield_capacity}"
+                    ),
+                    True,
+                    (
+                        100,
+                        195,
+                        255
+                    )
+                )
+            )
+
+
+            screen.blit(
+                shield,
+                (
+                    x,
+                    9
+                )
+            )
+
+
+            x += 125
+
+
+        credits = (
             self.font.render(
-                f"$ {player.money}",
+                (
+                    "CR "
+                    f"{player.money}"
+                ),
                 True,
                 (
-                    240,
-                    225,
-                    175
+                    245,
+                    215,
+                    110
                 )
             )
         )
 
 
         screen.blit(
-            money,
-            money.get_rect(
-                topright=(
-                    SCREEN_WIDTH - 15,
-                    7
+            credits,
+            (
+                x,
+                9
+            )
+        )
+
+
+        level_text = (
+            self.font.render(
+                (
+                    f"LEVEL {level_number} - "
+                    f"{level_name}"
+                ),
+                True,
+                (
+                    225,
+                    225,
+                    210
                 )
             )
         )
 
 
-        # ==================================
-        # HUD INFERIOR
-        # ==================================
+        screen.blit(
+            level_text,
+            level_text.get_rect(
+                right=
+                SCREEN_WIDTH - 12,
+                centery=17
+            )
+        )
 
-        y = (
+
+        # =================================================
+        # BOTTOM PANEL
+        # =================================================
+
+        panel_y = (
             SCREEN_HEIGHT
             - BOTTOM_PANEL_HEIGHT
         )
 
 
-        bottom_panel = pygame.Surface(
-            (
-                SCREEN_WIDTH,
-                BOTTOM_PANEL_HEIGHT
-            ),
-            pygame.SRCALPHA
-        )
-
-
-        bottom_panel.fill(
+        pygame.draw.rect(
+            screen,
             (
                 10,
                 18,
-                20,
-                235
-            )
-        )
-
-
-        screen.blit(
-            bottom_panel,
+                22
+            ),
             (
                 0,
-                y
+                panel_y,
+                SCREEN_WIDTH,
+                BOTTOM_PANEL_HEIGHT
             )
         )
 
@@ -300,24 +386,28 @@ class RetroHUD:
         pygame.draw.line(
             screen,
             (
-                210,
-                190,
-                120
+                85,
+                145,
+                145
             ),
             (
                 0,
-                y
+                panel_y
             ),
             (
                 SCREEN_WIDTH,
-                y
+                panel_y
             ),
             2
         )
 
 
+        # =================================================
+        # NIHL
+        # =================================================
+
         mood = (
-            self.get_nihl_mood(
+            self.get_mood(
                 player
             )
         )
@@ -334,19 +424,47 @@ class RetroHUD:
             portrait,
             (
                 12,
-                y + 6
+                panel_y + 18
             )
         )
 
 
+        # =================================================
+        # ACTIVE LOADOUT
+        # =================================================
+
+        primary = (
+            PRIMARY_WEAPONS[
+                player.primary_id
+            ]
+        )
+
+
+        secondary = (
+            SECONDARY_WEAPONS[
+                player.secondary_id
+            ]
+        )
+
+
+        defense = (
+            DEFENSE_MODULES[
+                player.defense_id
+            ]
+        )
+
+
         ship_text = (
-            self.font.render(
-                player.ship_name,
+            self.small_font.render(
+                (
+                    "SHIP: "
+                    + player.ship_name
+                ),
                 True,
                 (
-                    245,
-                    225,
-                    175
+                    200,
+                    210,
+                    205
                 )
             )
         )
@@ -355,81 +473,272 @@ class RetroHUD:
         screen.blit(
             ship_text,
             (
-                100,
-                y + 16
+                90,
+                panel_y + 10
             )
         )
 
 
-        weapon = (
+        primary_text = (
             self.small_font.render(
                 (
-                    "WEAPON: "
-                    f"{player.weapon_name}"
+                    "PRIMARY: "
+                    + primary["name"]
+                    + self.special_suffix(
+                        primary
+                    )
                 ),
                 True,
                 (
-                    130,
-                    220,
-                    190
+                    120,
+                    225,
+                    235
                 )
             )
         )
 
 
         screen.blit(
-            weapon,
+            primary_text,
             (
-                100,
-                y + 48
+                90,
+                panel_y + 29
             )
         )
 
 
-        core = (
+        # =================================================
+        # SECONDARY STATUS
+        # =================================================
+
+        if (
+            player.secondary_id == 0
+        ):
+
+            secondary_status = (
+                "NONE"
+            )
+
+
+        elif (
+            player.secondary_timer <= 0
+        ):
+
+            secondary_status = (
+                secondary["name"]
+                + self.special_suffix(
+                    secondary
+                )
+                + " [READY]"
+            )
+
+
+        else:
+
+            secondary_status = (
+
+                secondary["name"]
+
+                + self.special_suffix(
+                    secondary
+                )
+
+                + " ["
+
+                + f"{player.secondary_timer:.1f}s"
+
+                + "]"
+            )
+
+
+        secondary_text = (
             self.small_font.render(
                 (
-                    "NAV CORE: "
+                    "SECONDARY: "
+                    + secondary_status
+                ),
+                True,
+                (
+                    220,
+                    185,
+                    110
+                )
+            )
+        )
+
+
+        screen.blit(
+            secondary_text,
+            (
+                90,
+                panel_y + 48
+            )
+        )
+
+
+        defense_text = (
+            self.small_font.render(
+                (
+                    "DEFENSE: "
+                    + defense["name"]
+                    + self.special_suffix(
+                        defense
+                    )
+                ),
+                True,
+                (
+                    170,
+                    205,
+                    255
+                )
+            )
+        )
+
+
+        screen.blit(
+            defense_text,
+            (
+                90,
+                panel_y + 67
+            )
+        )
+
+
+        # =================================================
+        # RIGHT SIDE
+        # =================================================
+
+        core_text = (
+            self.small_font.render(
+                (
+                    "NAV CORE "
                     f"{nav_core_parts}/3"
                 ),
                 True,
                 (
-                    130,
-                    220,
-                    190
+                    120,
+                    235,
+                    200
                 )
             )
         )
 
 
         screen.blit(
-            core,
+            core_text,
             (
-                100,
-                y + 70
+                520,
+                panel_y + 12
             )
         )
 
 
-        level = (
-            self.font.render(
-                f"LEVEL {level_number}",
+        chips_text = (
+            self.small_font.render(
+                (
+                    "NAV CHIPS "
+                    f"{nav_chips}"
+                ),
                 True,
                 (
-                    245,
-                    225,
-                    175
+                    100,
+                    205,
+                    240
                 )
             )
         )
 
 
         screen.blit(
-            level,
-            level.get_rect(
-                topright=(
-                    SCREEN_WIDTH - 15,
-                    y + 18
+            chips_text,
+            (
+                520,
+                panel_y + 31
+            )
+        )
+
+
+        # =================================================
+        # OVERHEAT
+        # =================================================
+
+        if (
+            player.overheat_timer > 0
+        ):
+
+            overheat = (
+                self.small_font.render(
+                    (
+                        "OVERHEAT "
+                        f"{player.overheat_timer:.1f}s"
+                    ),
+                    True,
+                    (
+                        255,
+                        120,
+                        80
+                    )
                 )
+            )
+
+
+            screen.blit(
+                overheat,
+                (
+                    520,
+                    panel_y + 50
+                )
+            )
+
+
+        elif (
+            "overheat_after"
+            in primary
+        ):
+
+            heat = (
+                self.tiny_font.render(
+                    (
+                        "HEAT "
+                        f"{player.overheat_shots}/"
+                        f"{primary['overheat_after']}"
+                    ),
+                    True,
+                    (
+                        230,
+                        190,
+                        100
+                    )
+                )
+            )
+
+
+            screen.blit(
+                heat,
+                (
+                    520,
+                    panel_y + 51
+                )
+            )
+
+
+        special_hint = (
+            self.tiny_font.render(
+                "* SECRET EQUIPMENT",
+                True,
+                (
+                    135,
+                    130,
+                    160
+                )
+            )
+        )
+
+
+        screen.blit(
+            special_hint,
+            (
+                520,
+                panel_y + 73
             )
         )

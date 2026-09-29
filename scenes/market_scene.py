@@ -3,6 +3,7 @@ import pygame
 
 from settings import (
     SCREEN_WIDTH,
+    SCREEN_HEIGHT,
     ASSETS_DIR
 )
 
@@ -18,6 +19,43 @@ from game_data import (
     HULL_UPGRADE_PRICES,
     MAX_PLAYER_HP
 )
+
+
+MERCHANT_NAMES = {
+
+    "gray": [
+        "ZIH",
+        "KEL",
+        "ORR",
+        "NEM",
+        "VEK",
+        "TYL",
+        "QIR",
+        "SIL"
+    ],
+
+    "reptilian": [
+        "KRAZ",
+        "VORRAK",
+        "SSEK",
+        "THRAK",
+        "ZARR",
+        "KESS",
+        "DRAAL",
+        "VESS"
+    ],
+
+    "mantid": [
+        "KT'IK",
+        "ZAAK",
+        "THI'RA",
+        "KLIK",
+        "IX'KA",
+        "TRIIL",
+        "KHAK",
+        "ZIK'TA"
+    ]
+}
 
 
 class MarketScene:
@@ -54,11 +92,11 @@ class MarketScene:
         self.message = ""
 
 
-        # ==================================
+        # =================================================
         # MERCHANT
-        # ==================================
+        # =================================================
 
-        species_id = (
+        self.species_id = (
             random.choice(
                 list(
                     MERCHANT_SPECIES.keys()
@@ -78,8 +116,17 @@ class MarketScene:
 
         self.species = (
             MERCHANT_SPECIES[
-                species_id
+                self.species_id
             ]
+        )
+
+
+        self.merchant_name = (
+            random.choice(
+                MERCHANT_NAMES[
+                    self.species_id
+                ]
+            )
         )
 
 
@@ -131,9 +178,7 @@ class MarketScene:
 
             image = (
                 pygame.image.load(
-                    str(
-                        portrait_path
-                    )
+                    str(portrait_path)
                 ).convert_alpha()
             )
 
@@ -148,6 +193,7 @@ class MarketScene:
                 )
             )
 
+
         else:
 
             pygame.draw.rect(
@@ -161,6 +207,10 @@ class MarketScene:
                 border_radius=8
             )
 
+
+        # =================================================
+        # FONTS
+        # =================================================
 
         self.title_font = (
             pygame.font.SysFont(
@@ -186,6 +236,37 @@ class MarketScene:
                 13,
                 bold=True
             )
+        )
+
+
+        # =================================================
+        # MOUSE AREAS
+        # =================================================
+
+        self.item_rects = []
+
+
+        self.buy_rect = pygame.Rect(
+            370,
+            580,
+            130,
+            42
+        )
+
+
+        self.loadout_rect = pygame.Rect(
+            510,
+            580,
+            170,
+            42
+        )
+
+
+        self.back_rect = pygame.Rect(
+            40,
+            580,
+            130,
+            42
         )
 
 
@@ -217,7 +298,10 @@ class MarketScene:
         )
 
 
-        if item_type == "hull":
+        if (
+            item_type
+            == "hull"
+        ):
 
             if (
                 progress.max_hp
@@ -234,7 +318,10 @@ class MarketScene:
             )
 
 
-        if item_type == "nav_chip":
+        if (
+            item_type
+            == "nav_chip"
+        ):
 
             return (
                 self.post[
@@ -250,7 +337,10 @@ class MarketScene:
         )
 
 
-        if item_type == "primary":
+        if (
+            item_type
+            == "primary"
+        ):
 
             return (
                 PRIMARY_WEAPONS[
@@ -261,7 +351,10 @@ class MarketScene:
             )
 
 
-        if item_type == "secondary":
+        if (
+            item_type
+            == "secondary"
+        ):
 
             return (
                 SECONDARY_WEAPONS[
@@ -272,7 +365,10 @@ class MarketScene:
             )
 
 
-        if item_type == "defense":
+        if (
+            item_type
+            == "defense"
+        ):
 
             return (
                 DEFENSE_MODULES[
@@ -283,7 +379,10 @@ class MarketScene:
             )
 
 
-        if item_type == "ship":
+        if (
+            item_type
+            == "ship"
+        ):
 
             return (
                 SHIPS[
@@ -329,7 +428,7 @@ class MarketScene:
 
 
     # =====================================================
-    # OWNED?
+    # OWNED
     # =====================================================
 
     def is_owned(
@@ -371,7 +470,10 @@ class MarketScene:
         )
 
 
-        if item_type == "primary":
+        if (
+            item_type
+            == "primary"
+        ):
 
             return (
                 progress
@@ -381,7 +483,10 @@ class MarketScene:
             )
 
 
-        if item_type == "secondary":
+        if (
+            item_type
+            == "secondary"
+        ):
 
             return (
                 progress
@@ -391,7 +496,10 @@ class MarketScene:
             )
 
 
-        if item_type == "defense":
+        if (
+            item_type
+            == "defense"
+        ):
 
             return (
                 progress
@@ -401,7 +509,10 @@ class MarketScene:
             )
 
 
-        if item_type == "ship":
+        if (
+            item_type
+            == "ship"
+        ):
 
             return (
                 progress
@@ -497,11 +608,10 @@ class MarketScene:
         )
 
 
-        # ==================================
-        # HULL
-        # ==================================
-
-        if item_type == "hull":
+        if (
+            item_type
+            == "hull"
+        ):
 
             progress.max_hp += 1
 
@@ -510,11 +620,10 @@ class MarketScene:
             )
 
 
-        # ==================================
-        # NAV CHIP
-        # ==================================
-
-        elif item_type == "nav_chip":
+        elif (
+            item_type
+            == "nav_chip"
+        ):
 
             if (
                 progress.nav_chips >= 7
@@ -523,6 +632,7 @@ class MarketScene:
                 progress.money += (
                     price
                 )
+
 
                 self.message = (
                     "CHIP STORAGE FULL"
@@ -533,16 +643,16 @@ class MarketScene:
 
             progress.nav_chips += 1
 
+
             self.message = (
                 "NAV CHIP ACQUIRED"
             )
 
 
-        # ==================================
-        # PRIMARY
-        # ==================================
-
-        elif item_type == "primary":
+        elif (
+            item_type
+            == "primary"
+        ):
 
             equipment_id = (
                 item[
@@ -566,11 +676,10 @@ class MarketScene:
             )
 
 
-        # ==================================
-        # SECONDARY
-        # ==================================
-
-        elif item_type == "secondary":
+        elif (
+            item_type
+            == "secondary"
+        ):
 
             equipment_id = (
                 item[
@@ -594,11 +703,10 @@ class MarketScene:
             )
 
 
-        # ==================================
-        # DEFENSE
-        # ==================================
-
-        elif item_type == "defense":
+        elif (
+            item_type
+            == "defense"
+        ):
 
             equipment_id = (
                 item[
@@ -622,11 +730,10 @@ class MarketScene:
             )
 
 
-        # ==================================
-        # SHIP
-        # ==================================
-
-        elif item_type == "ship":
+        elif (
+            item_type
+            == "ship"
+        ):
 
             equipment_id = (
                 item[
@@ -659,73 +766,139 @@ class MarketScene:
         event
     ):
 
+        # =================================================
+        # KEYBOARD
+        # =================================================
+
         if (
             event.type
-            != pygame.KEYDOWN
+            == pygame.KEYDOWN
         ):
 
-            return
+            if (
+                event.key
+                == pygame.K_ESCAPE
+            ):
+
+                self.game.show_map()
+
+                return
 
 
-        if (
-            event.key
-            == pygame.K_ESCAPE
-        ):
+            if (
+                event.key
+                == pygame.K_l
+            ):
 
-            self.game.show_map()
+                self.game.show_loadout()
 
-            return
-
-
-        if (
-            event.key
-            == pygame.K_l
-        ):
-
-            self.game.show_loadout()
-
-            return
+                return
 
 
-        if not self.item_ids:
+            if not self.item_ids:
 
-            return
+                return
 
 
-        if (
-            event.key
-            == pygame.K_UP
-        ):
+            if (
+                event.key
+                == pygame.K_UP
+            ):
 
-            self.selected = (
+                self.selected = (
 
-                self.selected - 1
+                    self.selected - 1
 
-            ) % len(
-                self.item_ids
-            )
+                ) % len(
+                    self.item_ids
+                )
 
+
+            elif (
+                event.key
+                == pygame.K_DOWN
+            ):
+
+                self.selected = (
+
+                    self.selected + 1
+
+                ) % len(
+                    self.item_ids
+                )
+
+
+            elif event.key in (
+                pygame.K_RETURN,
+                pygame.K_b
+            ):
+
+                self.buy_selected()
+
+
+        # =================================================
+        # MOUSE
+        # =================================================
 
         elif (
-            event.key
-            == pygame.K_DOWN
+            event.type
+            == pygame.MOUSEBUTTONDOWN
+
+            and event.button == 1
         ):
 
-            self.selected = (
+            for (
+                index,
+                rect
+            ) in enumerate(
+                self.item_rects
+            ):
 
-                self.selected + 1
+                if rect.collidepoint(
+                    event.pos
+                ):
 
-            ) % len(
-                self.item_ids
-            )
+                    self.selected = (
+                        index
+                    )
+
+                    return
 
 
-        elif event.key in (
-            pygame.K_RETURN,
-            pygame.K_b
-        ):
+            if (
+                self.buy_rect
+                .collidepoint(
+                    event.pos
+                )
+            ):
 
-            self.buy_selected()
+                self.buy_selected()
+
+                return
+
+
+            if (
+                self.loadout_rect
+                .collidepoint(
+                    event.pos
+                )
+            ):
+
+                self.game.show_loadout()
+
+                return
+
+
+            if (
+                self.back_rect
+                .collidepoint(
+                    event.pos
+                )
+            ):
+
+                self.game.show_map()
+
+                return
 
 
     def update(
@@ -734,6 +907,63 @@ class MarketScene:
     ):
 
         pass
+
+
+    # =====================================================
+    # BUTTON
+    # =====================================================
+
+    def draw_button(
+        self,
+        screen,
+        rect,
+        text
+    ):
+
+        pygame.draw.rect(
+            screen,
+            (
+                55,
+                72,
+                72
+            ),
+            rect,
+            border_radius=5
+        )
+
+
+        pygame.draw.rect(
+            screen,
+            (
+                115,
+                145,
+                130
+            ),
+            rect,
+            1,
+            border_radius=5
+        )
+
+
+        label = (
+            self.small_font.render(
+                text,
+                True,
+                (
+                    235,
+                    225,
+                    200
+                )
+            )
+        )
+
+
+        screen.blit(
+            label,
+            label.get_rect(
+                center=rect.center
+            )
+        )
 
 
     # =====================================================
@@ -774,7 +1004,7 @@ class MarketScene:
             title.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    40
+                    38
                 )
             )
         )
@@ -789,11 +1019,15 @@ class MarketScene:
         )
 
 
-        species = (
+        identity = (
             self.small_font.render(
-                self.species[
-                    "name"
-                ],
+                (
+                    self.merchant_name
+                    + " - "
+                    + self.species[
+                        "name"
+                    ]
+                ),
                 True,
                 (
                     180,
@@ -805,7 +1039,7 @@ class MarketScene:
 
 
         screen.blit(
-            species,
+            identity,
             (
                 20,
                 240
@@ -890,6 +1124,13 @@ class MarketScene:
         )
 
 
+        # =================================================
+        # ITEMS
+        # =================================================
+
+        self.item_rects = []
+
+
         y = 165
 
 
@@ -948,6 +1189,33 @@ class MarketScene:
                 )
 
 
+            rect = pygame.Rect(
+                165,
+                y - 6,
+                515,
+                36
+            )
+
+
+            self.item_rects.append(
+                rect
+            )
+
+
+            if selected:
+
+                pygame.draw.rect(
+                    screen,
+                    (
+                        48,
+                        58,
+                        48
+                    ),
+                    rect,
+                    border_radius=4
+                )
+
+
             color = (
 
                 (
@@ -966,18 +1234,10 @@ class MarketScene:
             )
 
 
-            prefix = (
-                "> "
-                if selected
-                else "  "
-            )
-
-
             text = (
                 self.font.render(
                     (
-                        prefix
-                        + item[
+                        item[
                             "name"
                         ]
                         + "   "
@@ -1021,34 +1281,28 @@ class MarketScene:
                 message.get_rect(
                     center=(
                         SCREEN_WIDTH // 2,
-                        545
+                        540
                     )
                 )
             )
 
 
-        controls = (
-            self.small_font.render(
-                (
-                    "UP/DOWN SELECT   ENTER BUY   "
-                    "L LOADOUT   ESC MAP"
-                ),
-                True,
-                (
-                    190,
-                    190,
-                    180
-                )
-            )
+        self.draw_button(
+            screen,
+            self.back_rect,
+            "MAP"
         )
 
 
-        screen.blit(
-            controls,
-            controls.get_rect(
-                center=(
-                    SCREEN_WIDTH // 2,
-                    635
-                )
-            )
+        self.draw_button(
+            screen,
+            self.buy_rect,
+            "BUY"
+        )
+
+
+        self.draw_button(
+            screen,
+            self.loadout_rect,
+            "LOADOUT"
         )

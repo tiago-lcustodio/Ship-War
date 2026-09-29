@@ -9,7 +9,6 @@ from settings import (
     PLAY_AREA_BOTTOM,
     ASSETS_DIR,
     PLAYER_WIDTH,
-    PLAYER_HEIGHT,
     EXPLOSION_SIZE,
     BACKGROUND_SPEED,
     SLOW_BACKGROUND_EXTRA_HEIGHT,
@@ -29,7 +28,8 @@ from game_data import (
     SECRET_ROUTES,
     COMMON_DROP_CHANCE,
     COMMON_DROPS,
-    NAV_CHIP_DROP_CHANCE
+    NAV_CHIP_DROP_CHANCE,
+    LEVELS
 )
 
 
@@ -82,28 +82,10 @@ class LevelScene:
         )
 
 
-        # =================================================
-        # ATTEMPT SNAPSHOTS
-        # =================================================
-        #
-        # entry_progress:
-        # Estado antes de entrar na fase.
-        #
-        # run_progress:
-        # Estado sendo construído durante
-        # esta tentativa.
-        #
-        # Se morrer:
-        # run_progress é descartado.
-        #
-        # Se completar/sair pela rota:
-        # run_progress vira game.progress.
-        #
-        # =================================================
-
         self.entry_progress = (
             progress.clone()
         )
+
 
         self.run_progress = (
             progress.clone()
@@ -115,6 +97,11 @@ class LevelScene:
             .is_completed(
                 self.level_number
             )
+        )
+
+
+        self.is_replay = (
+            not self.first_play
         )
 
 
@@ -131,10 +118,6 @@ class LevelScene:
             ]
         )
 
-
-        # =================================================
-        # BACKGROUND
-        # =================================================
 
         self.background_mode = (
             self.config.get(
@@ -155,7 +138,9 @@ class LevelScene:
         self.load_assets()
 
 
-        self.hud = RetroHUD()
+        self.hud = (
+            RetroHUD()
+        )
 
 
         self.reset()
@@ -208,12 +193,49 @@ class LevelScene:
         )
 
 
+        # =================================================
+        # PRESERVE ASPECT RATIO
+        # =================================================
+
+        original_width = (
+            image.get_width()
+        )
+
+
+        original_height = (
+            image.get_height()
+        )
+
+
+        if original_width <= 0:
+
+            original_width = 1
+
+
+        aspect_ratio = (
+
+            original_height
+            / original_width
+        )
+
+
+        player_height = max(
+
+            1,
+
+            int(
+                PLAYER_WIDTH
+                * aspect_ratio
+            )
+        )
+
+
         self.player_image = (
             pygame.transform.smoothscale(
                 image,
                 (
                     PLAYER_WIDTH,
-                    PLAYER_HEIGHT
+                    player_height
                 )
             )
         )
@@ -280,7 +302,7 @@ class LevelScene:
 
 
         # =================================================
-        # ENEMY IMAGES
+        # ENEMIES
         # =================================================
 
         self.enemy_images = {}
@@ -336,7 +358,7 @@ class LevelScene:
 
 
         # =================================================
-        # BOSS IMAGE
+        # BOSS
         # =================================================
 
         self.boss_image = None
@@ -376,14 +398,12 @@ class LevelScene:
 
             else:
 
-                # Fallback para um inimigo
-                # normal enquanto boss não
-                # possui sprite próprio.
                 first_enemy_id = (
                     self.config[
                         "enemy_types"
                     ][0]
                 )
+
 
                 image = (
                     self.enemy_images[
@@ -414,7 +434,10 @@ class LevelScene:
         self.explosion_frames = []
 
 
-        for number in range(1, 4):
+        for number in range(
+            1,
+            4
+        ):
 
             image = (
                 pygame.image.load(
@@ -480,10 +503,6 @@ class LevelScene:
         )
 
 
-        # =============================================
-        # CONTINUOUS LOOP
-        # =============================================
-
         if (
             self.background_mode
             == "scroll"
@@ -499,10 +518,6 @@ class LevelScene:
                 )
             )
 
-
-        # =============================================
-        # SLOW PAN, NO LOOP
-        # =============================================
 
         elif (
             self.background_mode
@@ -522,10 +537,6 @@ class LevelScene:
             )
 
 
-        # =============================================
-        # STATIC
-        # =============================================
-
         else:
 
             self.background = (
@@ -540,7 +551,7 @@ class LevelScene:
 
 
     # =====================================================
-    # RESET ATTEMPT
+    # RESET
     # =====================================================
 
     def reset(self):
@@ -571,10 +582,6 @@ class LevelScene:
         )
 
 
-        # =================================================
-        # SPRITE GROUPS
-        # =================================================
-
         self.enemies = (
             pygame.sprite.Group()
         )
@@ -604,10 +611,6 @@ class LevelScene:
         )
 
 
-        # =================================================
-        # BACKGROUND
-        # =================================================
-
         self.background_y1 = 0
 
         self.background_y2 = (
@@ -620,11 +623,10 @@ class LevelScene:
         )
 
 
-        # =================================================
-        # STATE
-        # =================================================
+        self.state = (
+            "intro"
+        )
 
-        self.state = "intro"
 
         self.state_timer = 0
 
@@ -643,17 +645,13 @@ class LevelScene:
         )
 
 
-        # =================================================
-        # SHAKE
-        # =================================================
-
         self.shake_timer = 0
 
         self.shake_strength = 0
 
 
         # =================================================
-        # NAVIGATION CORE
+        # NAV CORE
         # =================================================
 
         self.core_piece_number = (
@@ -668,7 +666,6 @@ class LevelScene:
         self.core_piece_collected = False
 
 
-        # Já foi coletada em outra tentativa/fase.
         if (
             self.core_piece_number
             is not None
@@ -689,12 +686,15 @@ class LevelScene:
 
 
         # =================================================
-        # SECRET ROUTE
+        # ROUTE / EXIT
         # =================================================
 
         self.secret_target = None
 
-        self.exit_reason = "normal"
+        self.exit_reason = (
+            "normal"
+        )
+
 
         self.jump_target = None
 
@@ -715,7 +715,6 @@ class LevelScene:
         self.boss_threat_timer = 0
 
 
-        # Boss apenas na primeira conclusão.
         self.should_have_boss = bool(
 
             self.first_play
@@ -736,14 +735,23 @@ class LevelScene:
         self.pause_selected = 0
 
 
-        self.pause_options = [
-            "CONTINUE",
-            "QUIT"
-        ]
+        if self.is_replay:
+
+            self.pause_options = [
+                "CONTINUE",
+                "LEAVE MISSION"
+            ]
+
+        else:
+
+            self.pause_options = [
+                "CONTINUE",
+                "QUIT"
+            ]
 
 
         # =================================================
-        # ADMIN TERMINAL
+        # TERMINAL
         # =================================================
 
         self.terminal_open = False
@@ -760,7 +768,7 @@ class LevelScene:
         self.medium_font = (
             pygame.font.SysFont(
                 "couriernew",
-                38,
+                31,
                 bold=True
             )
         )
@@ -787,7 +795,7 @@ class LevelScene:
         self.message_font = (
             pygame.font.SysFont(
                 "couriernew",
-                27,
+                24,
                 bold=True
             )
         )
@@ -799,10 +807,32 @@ class LevelScene:
 
 
     # =====================================================
+    # MESSAGE
+    # =====================================================
+
+    def show_message(
+        self,
+        text,
+        duration=2.0
+    ):
+
+        self.core_message = (
+            text
+        )
+
+        self.core_message_timer = (
+            duration
+        )
+
+
+    # =====================================================
     # EVENTS
     # =====================================================
 
-    def handle_event(self, event):
+    def handle_event(
+        self,
+        event
+    ):
 
         if (
             event.type
@@ -823,7 +853,9 @@ class LevelScene:
                 == pygame.K_ESCAPE
             ):
 
-                self.terminal_open = False
+                self.terminal_open = (
+                    False
+                )
 
                 return
 
@@ -871,7 +903,6 @@ class LevelScene:
 
         if self.paused:
 
-            # Ctrl + T.
             if (
                 event.key
                 == pygame.K_t
@@ -882,7 +913,9 @@ class LevelScene:
                 )
             ):
 
-                self.terminal_open = True
+                self.terminal_open = (
+                    True
+                )
 
                 self.terminal_text = ""
 
@@ -896,7 +929,9 @@ class LevelScene:
                 == pygame.K_ESCAPE
             ):
 
-                self.paused = False
+                self.paused = (
+                    False
+                )
 
                 return
 
@@ -950,7 +985,29 @@ class LevelScene:
                     == "CONTINUE"
                 ):
 
-                    self.paused = False
+                    self.paused = (
+                        False
+                    )
+
+
+                elif (
+                    option
+                    == "LEAVE MISSION"
+                ):
+
+                    self.paused = (
+                        False
+                    )
+
+
+                    self.exit_reason = (
+                        "replay_exit"
+                    )
+
+
+                    self.start_level_exit(
+                        force=True
+                    )
 
 
                 elif (
@@ -958,11 +1015,11 @@ class LevelScene:
                     == "QUIT"
                 ):
 
-                    # Descarta esta tentativa.
                     self.game.progress = (
                         self.entry_progress
                         .clone()
                     )
+
 
                     self.game.show_map()
 
@@ -974,7 +1031,7 @@ class LevelScene:
 
 
         # =================================================
-        # SECRET ROUTE
+        # TAB ROUTE
         # =================================================
 
         if (
@@ -1004,14 +1061,18 @@ class LevelScene:
                 "playing"
             ):
 
-                self.paused = True
+                self.paused = (
+                    True
+                )
 
 
     # =====================================================
-    # ADMIN TERMINAL
+    # CHEATS
     # =====================================================
 
-    def execute_terminal_command(self):
+    def execute_terminal_command(
+        self
+    ):
 
         command = (
             self.terminal_text
@@ -1033,14 +1094,15 @@ class LevelScene:
             )
 
 
-            # Cheat permanece mesmo se morrer.
             self.run_progress.money = (
                 self.player.money
             )
 
+
             self.entry_progress.money = (
                 self.player.money
             )
+
 
             self.game.progress.money = (
                 self.player.money
@@ -1058,7 +1120,38 @@ class LevelScene:
 
 
         # =================================================
-        # JUMP TO LEVEL X
+        # COMPLETE HEALTH
+        # =================================================
+
+        if (
+            command
+            == "complete health"
+        ):
+
+            self.player.max_hp = 7
+
+            self.player.hp = 7
+
+
+            self.run_progress.max_hp = 7
+
+            self.entry_progress.max_hp = 7
+
+            self.game.progress.max_hp = 7
+
+
+            self.terminal_message = (
+                "HULL 7/7"
+            )
+
+
+            self.terminal_text = ""
+
+            return
+
+
+        # =================================================
+        # JUMP
         # =================================================
 
         match = re.fullmatch(
@@ -1091,9 +1184,13 @@ class LevelScene:
             )
 
 
-            self.terminal_open = False
+            self.terminal_open = (
+                False
+            )
 
-            self.paused = False
+            self.paused = (
+                False
+            )
 
 
             self.start_level_exit(
@@ -1112,10 +1209,12 @@ class LevelScene:
 
 
     # =====================================================
-    # SECRET ROUTES
+    # SECRET ROUTE
     # =====================================================
 
-    def try_secret_route(self):
+    def try_secret_route(
+        self
+    ):
 
         route = (
             SECRET_ROUTES.get(
@@ -1166,7 +1265,6 @@ class LevelScene:
             return
 
 
-        # Consome exatamente um.
         self.run_progress.nav_chips -= 1
 
 
@@ -1192,28 +1290,8 @@ class LevelScene:
         )
 
 
-        # Mesma animação visual de saída.
         self.start_level_exit(
             force=True
-        )
-
-
-    # =====================================================
-    # GENERIC MESSAGE
-    # =====================================================
-
-    def show_message(
-        self,
-        text,
-        duration=2.0
-    ):
-
-        self.core_message = (
-            text
-        )
-
-        self.core_message_timer = (
-            duration
         )
 
 
@@ -1261,8 +1339,6 @@ class LevelScene:
         )
 
 
-        # Só o scroll contínuo acelera
-        # durante a saída.
         if (
             self.state
             == "ending"
@@ -1274,10 +1350,6 @@ class LevelScene:
             speed *= 4
 
 
-        # =================================================
-        # LOOP
-        # =================================================
-
         if (
             self.background_mode
             == "scroll"
@@ -1286,6 +1358,7 @@ class LevelScene:
             self.background_y1 += (
                 speed * dt
             )
+
 
             self.background_y2 += (
                 speed * dt
@@ -1300,7 +1373,6 @@ class LevelScene:
                 self.background_y1 = (
 
                     self.background_y2
-
                     - SCREEN_HEIGHT
                 )
 
@@ -1313,14 +1385,9 @@ class LevelScene:
                 self.background_y2 = (
 
                     self.background_y1
-
                     - SCREEN_HEIGHT
                 )
 
-
-        # =================================================
-        # SLOW PAN
-        # =================================================
 
         elif (
             self.background_mode
@@ -1332,7 +1399,6 @@ class LevelScene:
             )
 
 
-            # Nunca deixa aparecer área vazia.
             self.slow_background_y = min(
                 0,
                 self.slow_background_y
@@ -1343,10 +1409,10 @@ class LevelScene:
     # SPAWN ENEMY
     # =====================================================
 
-    def spawn_enemy(self):
+    def spawn_enemy(
+        self
+    ):
 
-        # Durante boss não queremos
-        # novos inimigos comuns entrando.
         if (
             self.boss_spawned
 
@@ -1375,26 +1441,26 @@ class LevelScene:
         )
 
 
-        enemy = (
-            Enemy(
+        enemy = Enemy(
 
-                image=
-                self.enemy_images[
-                    enemy_id
-                ],
+            image=
+            self.enemy_images[
+                enemy_id
+            ],
 
-                shot_image=
-                self.enemy_shot_image,
+            shot_image=
+            self.enemy_shot_image,
 
-                config=
-                ENEMY_TYPES[
-                    enemy_id
-                ]
-            )
+            config=
+            ENEMY_TYPES[
+                enemy_id
+            ]
         )
 
 
-        enemy.is_boss = False
+        enemy.is_boss = (
+            False
+        )
 
 
         self.enemies.add(
@@ -1406,12 +1472,17 @@ class LevelScene:
     # BOSS
     # =====================================================
 
-    def spawn_boss(self):
+    def spawn_boss(
+        self
+    ):
 
         if not self.should_have_boss:
+
             return
 
+
         if self.boss_spawned:
+
             return
 
 
@@ -1422,22 +1493,22 @@ class LevelScene:
         )
 
 
-        boss = (
-            Enemy(
+        boss = Enemy(
 
-                image=
-                self.boss_image,
+            image=
+            self.boss_image,
 
-                shot_image=
-                self.enemy_shot_image,
+            shot_image=
+            self.enemy_shot_image,
 
-                config=
-                boss_config
-            )
+            config=
+            boss_config
         )
 
 
-        boss.is_boss = True
+        boss.is_boss = (
+            True
+        )
 
 
         self.enemies.add(
@@ -1450,18 +1521,18 @@ class LevelScene:
         )
 
 
-        self.boss_spawned = True
+        self.boss_spawned = (
+            True
+        )
 
 
-        # Limpa os inimigos comuns?
-        #
-        # Mantemos apenas o boss para
-        # transformar sua entrada em evento.
         for enemy in list(
             self.enemies
         ):
 
-            if enemy is not boss:
+            if (
+                enemy is not boss
+            ):
 
                 enemy.kill()
 
@@ -1479,10 +1550,12 @@ class LevelScene:
 
 
     # =====================================================
-    # NAVIGATION CORE
+    # CORE
     # =====================================================
 
-    def spawn_nav_core_piece(self):
+    def spawn_nav_core_piece(
+        self
+    ):
 
         if (
             self.core_piece_number
@@ -1493,10 +1566,12 @@ class LevelScene:
 
 
         if self.core_piece_spawned:
+
             return
 
 
         if self.core_piece_collected:
+
             return
 
 
@@ -1512,12 +1587,10 @@ class LevelScene:
         )
 
 
-        piece = (
-            NavCorePiece(
-                (
-                    x,
-                    y
-                )
+        piece = NavCorePiece(
+            (
+                x,
+                y
             )
         )
 
@@ -1527,10 +1600,14 @@ class LevelScene:
         )
 
 
-        self.core_piece_spawned = True
+        self.core_piece_spawned = (
+            True
+        )
 
 
-    def check_nav_core_collision(self):
+    def check_nav_core_collision(
+        self
+    ):
 
         for piece in list(
             self.nav_core_items
@@ -1549,7 +1626,9 @@ class LevelScene:
             piece.kill()
 
 
-            self.core_piece_collected = True
+            self.core_piece_collected = (
+                True
+            )
 
 
             self.run_progress.nav_core_parts = max(
@@ -1567,9 +1646,13 @@ class LevelScene:
             ):
 
                 self.show_message(
-                    "NAVIGATION CORE RESTORED",
-                    2.5
+                    (
+                        "FINALLY! I DID IT! "
+                        "THE CORE IS COMPLETE!"
+                    ),
+                    4.0
                 )
+
 
             else:
 
@@ -1625,6 +1708,7 @@ class LevelScene:
     ):
 
         if not enemy.alive():
+
             return
 
 
@@ -1676,7 +1760,10 @@ class LevelScene:
 
         if is_boss:
 
-            self.boss_defeated = True
+            self.boss_defeated = (
+                True
+            )
+
 
             self.show_message(
                 "BOSS DESTROYED"
@@ -1691,17 +1778,13 @@ class LevelScene:
 
 
     # =====================================================
-    # DROPS
+    # DROP
     # =====================================================
 
     def spawn_drop(
         self,
         center
     ):
-
-        # =================================================
-        # RARE NAV CHIP
-        # =================================================
 
         if (
             self.level_number >= 3
@@ -1723,10 +1806,6 @@ class LevelScene:
 
             return
 
-
-        # =================================================
-        # COMMON DROP
-        # =================================================
 
         if (
             random.random()
@@ -1756,7 +1835,9 @@ class LevelScene:
         accumulated = 0
 
 
-        for item in COMMON_DROPS:
+        for item in (
+            COMMON_DROPS
+        ):
 
             accumulated += (
                 item[
@@ -1793,10 +1874,12 @@ class LevelScene:
 
 
     # =====================================================
-    # COLLECT PICKUPS
+    # COLLECT
     # =====================================================
 
-    def collect_pickups(self):
+    def collect_pickups(
+        self
+    ):
 
         for pickup in list(
             self.pickups
@@ -1812,10 +1895,6 @@ class LevelScene:
                 continue
 
 
-            # =============================================
-            # CREDITS
-            # =============================================
-
             if (
                 pickup.pickup_type
                 == "credits"
@@ -1828,18 +1907,11 @@ class LevelScene:
 
                 self.show_message(
                     (
-                        "+"
-                        + str(
-                            pickup.value
-                        )
-                        + " CREDITS"
+                        f"+{pickup.value} "
+                        "CREDITS"
                     )
                 )
 
-
-            # =============================================
-            # HEALTH
-            # =============================================
 
             elif (
                 pickup.pickup_type
@@ -1851,11 +1923,15 @@ class LevelScene:
                     < self.player.max_hp
                 ):
 
-                    self.player.heal(1)
+                    self.player.heal(
+                        1
+                    )
+
 
                     self.show_message(
                         "+1 HULL"
                     )
+
 
                 else:
 
@@ -1863,10 +1939,6 @@ class LevelScene:
                         "HULL FULL"
                     )
 
-
-            # =============================================
-            # NAV CHIP
-            # =============================================
 
             elif (
                 pickup.pickup_type
@@ -1880,9 +1952,11 @@ class LevelScene:
 
                     self.run_progress.nav_chips += 1
 
+
                     self.show_message(
                         "FORBIDDEN NAV CHIP"
                     )
+
 
                 else:
 
@@ -1900,7 +1974,7 @@ class LevelScene:
 
 
     # =====================================================
-    # PRIMARY COLLISION
+    # PROJECTILE HIT
     # =====================================================
 
     def handle_player_projectile_hit(
@@ -1918,15 +1992,6 @@ class LevelScene:
             return
 
 
-        # =================================================
-        # PLASMA BOMB
-        # =================================================
-        #
-        # Não damos dano direto + dano de explosão.
-        # A bomba simplesmente explode no primeiro contato.
-        #
-        # =================================================
-
         if (
             projectile.kind
             == "plasma_bomb"
@@ -1936,26 +2001,21 @@ class LevelScene:
                 projectile.rect.center
             )
 
+
             projectile.kill()
 
 
             self.detonate_plasma_bomb(
 
-                center=center,
+                center,
 
-                damage=
                 projectile.damage,
 
-                radius=
                 projectile.blast_radius
             )
 
             return
 
-
-        # =================================================
-        # NORMAL / MISSILE / PIERCING
-        # =================================================
 
         projectile.register_hit(
             enemy
@@ -2023,6 +2083,7 @@ class LevelScene:
 
 
             if distance > radius:
+
                 continue
 
 
@@ -2046,10 +2107,12 @@ class LevelScene:
 
 
     # =====================================================
-    # SECONDARY WEAPON
+    # SECONDARY
     # =====================================================
 
-    def use_secondary(self):
+    def use_secondary(
+        self
+    ):
 
         if not (
             self.player
@@ -2071,14 +2134,19 @@ class LevelScene:
         )
 
 
-        activated = False
+        activated = (
+            False
+        )
 
 
         # =================================================
         # MISSILE
         # =================================================
 
-        if kind == "missile":
+        if (
+            kind
+            == "missile"
+        ):
 
             if not self.enemies:
 
@@ -2099,36 +2167,35 @@ class LevelScene:
             )
 
 
-            projectile = (
-                Projectile(
+            projectile = Projectile(
 
-                    image=
-                    self.player_shot_image,
+                image=
+                self.player
+                .get_secondary_shot_image(),
 
-                    center=
-                    self.player.rect.midtop,
+                center=
+                self.player.rect.midtop,
 
-                    velocity=(
-                        0,
-                        -secondary[
-                            "speed"
-                        ]
-                    ),
+                velocity=(
+                    0,
+                    -secondary[
+                        "speed"
+                    ]
+                ),
 
-                    damage=
-                    secondary[
-                        "damage"
-                    ],
+                damage=
+                secondary[
+                    "damage"
+                ],
 
-                    owner=
-                    "player",
+                owner=
+                "player",
 
-                    kind=
-                    "missile",
+                kind=
+                "missile",
 
-                    target=
-                    target
-                )
+                target=
+                target
             )
 
 
@@ -2137,7 +2204,9 @@ class LevelScene:
             )
 
 
-            activated = True
+            activated = (
+                True
+            )
 
 
         # =================================================
@@ -2149,38 +2218,37 @@ class LevelScene:
             == "plasma_bomb"
         ):
 
-            projectile = (
-                Projectile(
+            projectile = Projectile(
 
-                    image=
-                    self.player_shot_image,
+                image=
+                self.player
+                .get_secondary_shot_image(),
 
-                    center=
-                    self.player.rect.midtop,
+                center=
+                self.player.rect.midtop,
 
-                    velocity=(
-                        0,
-                        -secondary[
-                            "speed"
-                        ]
-                    ),
-
-                    damage=
-                    secondary[
-                        "damage"
-                    ],
-
-                    owner=
-                    "player",
-
-                    kind=
-                    "plasma_bomb",
-
-                    blast_radius=
-                    secondary[
-                        "radius"
+                velocity=(
+                    0,
+                    -secondary[
+                        "speed"
                     ]
-                )
+                ),
+
+                damage=
+                secondary[
+                    "damage"
+                ],
+
+                owner=
+                "player",
+
+                kind=
+                "plasma_bomb",
+
+                blast_radius=
+                secondary[
+                    "radius"
+                ]
             )
 
 
@@ -2189,19 +2257,23 @@ class LevelScene:
             )
 
 
-            activated = True
+            activated = (
+                True
+            )
 
 
         # =================================================
         # EMP
         # =================================================
 
-        elif kind == "emp":
+        elif (
+            kind
+            == "emp"
+        ):
 
             player_pos = (
                 pygame.Vector2(
-                    self.player
-                    .rect.center
+                    self.player.rect.center
                 )
             )
 
@@ -2257,7 +2329,9 @@ class LevelScene:
                     )
 
 
-            activated = True
+            activated = (
+                True
+            )
 
 
         # =================================================
@@ -2271,11 +2345,15 @@ class LevelScene:
 
             self.player.activate_defense_burst()
 
+
             self.show_message(
                 "DEFENSE BURST"
             )
 
-            activated = True
+
+            activated = (
+                True
+            )
 
 
         # =================================================
@@ -2294,8 +2372,7 @@ class LevelScene:
 
             player_pos = (
                 pygame.Vector2(
-                    self.player
-                    .rect.center
+                    self.player.rect.center
                 )
             )
 
@@ -2372,16 +2449,16 @@ class LevelScene:
                 "CHAIN LIGHTNING"
             )
 
-            activated = True
 
+            activated = (
+                True
+            )
 
-        # =================================================
-        # APPLY COOLDOWN
-        # =================================================
 
         if activated:
 
             self.player.consume_secondary_cooldown()
+
 
             self.sound.play(
                 "shot_player"
@@ -2389,7 +2466,7 @@ class LevelScene:
 
 
     # =====================================================
-    # START LEVEL EXIT
+    # START EXIT
     # =====================================================
 
     def start_level_exit(
@@ -2404,10 +2481,6 @@ class LevelScene:
 
             return
 
-
-        # =================================================
-        # REQUIRED CORE PIECE
-        # =================================================
 
         if (
             not force
@@ -2424,10 +2497,6 @@ class LevelScene:
 
             return
 
-
-        # =================================================
-        # REQUIRED FIRST-CLEAR BOSS
-        # =================================================
 
         if (
             not force
@@ -2461,14 +2530,13 @@ class LevelScene:
 
 
     # =====================================================
-    # FINISH LEVEL
+    # FINISH
     # =====================================================
 
-    def finish_level(self):
+    def finish_level(
+        self
+    ):
 
-        # Antes de qualquer saída,
-        # registra dinheiro atual no estado
-        # desta tentativa.
         self.run_progress.money = (
             self.player.money
         )
@@ -2480,12 +2548,32 @@ class LevelScene:
 
 
         # =================================================
-        # SECRET ROUTE
+        # REPLAY EARLY EXIT
         # =================================================
         #
-        # Descobre a rota, salva pickups/chip
-        # coletados, mas NÃO conclui a fase.
+        # Faz animação bonita,
+        # mas não salva farm incompleto.
         #
+        # =================================================
+
+        if (
+            self.exit_reason
+            == "replay_exit"
+        ):
+
+            self.game.progress = (
+                self.entry_progress
+                .clone()
+            )
+
+
+            self.game.show_map()
+
+            return
+
+
+        # =================================================
+        # SECRET ROUTE
         # =================================================
 
         if (
@@ -2499,7 +2587,8 @@ class LevelScene:
 
 
             self.game.progress = (
-                self.run_progress.clone()
+                self.run_progress
+                .clone()
             )
 
 
@@ -2528,7 +2617,8 @@ class LevelScene:
 
 
             self.game.progress = (
-                self.run_progress.clone()
+                self.run_progress
+                .clone()
             )
 
 
@@ -2559,10 +2649,6 @@ class LevelScene:
         )
 
 
-        # =================================================
-        # MAIN CAMPAIGN PROGRESSION
-        # =================================================
-
         next_main = (
             NEXT_MAINLINE.get(
                 self.level_number
@@ -2577,19 +2663,14 @@ class LevelScene:
             )
 
 
-        # Fica estacionado no planeta
-        # que acabou de concluir.
         self.run_progress.next_level = (
             self.level_number
         )
 
 
-        # =================================================
-        # COMMIT ATTEMPT
-        # =================================================
-
         self.game.progress = (
-            self.run_progress.clone()
+            self.run_progress
+            .clone()
         )
 
 
@@ -2628,15 +2709,15 @@ class LevelScene:
     # UPDATE
     # =====================================================
 
-    def update(self, dt):
+    def update(
+        self,
+        dt
+    ):
 
         if self.paused:
+
             return
 
-
-        # =================================================
-        # WORLD EFFECTS
-        # =================================================
 
         self.update_background(
             dt
@@ -2660,16 +2741,14 @@ class LevelScene:
         )
 
 
-        # =================================================
-        # MESSAGES
-        # =================================================
-
         if (
             self.core_message_timer
             > 0
         ):
 
-            self.core_message_timer -= dt
+            self.core_message_timer -= (
+                dt
+            )
 
 
         if (
@@ -2677,18 +2756,18 @@ class LevelScene:
             > 0
         ):
 
-            self.boss_threat_timer -= dt
+            self.boss_threat_timer -= (
+                dt
+            )
 
-
-        # =================================================
-        # SHAKE
-        # =================================================
 
         if (
             self.shake_timer > 0
         ):
 
-            self.shake_timer -= dt
+            self.shake_timer -= (
+                dt
+            )
 
         else:
 
@@ -2704,7 +2783,9 @@ class LevelScene:
             == "intro"
         ):
 
-            self.state_timer += dt
+            self.state_timer += (
+                dt
+            )
 
 
             if (
@@ -2729,7 +2810,9 @@ class LevelScene:
             == "playing"
         ):
 
-            self.level_timer += dt
+            self.level_timer += (
+                dt
+            )
 
 
             keys = (
@@ -2758,15 +2841,11 @@ class LevelScene:
             )
 
 
-            # =================================================
-            # PICKUPS
-            # =================================================
-
             self.collect_pickups()
 
 
             # =================================================
-            # CORE PIECE
+            # CORE
             # =================================================
 
             if (
@@ -2802,17 +2881,13 @@ class LevelScene:
 
 
             # =================================================
-            # MOUSE FIRE
+            # FIRE
             # =================================================
 
             mouse = (
                 pygame.mouse.get_pressed()
             )
 
-
-            # =============================================
-            # PRIMARY — LEFT MOUSE
-            # =============================================
 
             if mouse[0]:
 
@@ -2837,25 +2912,22 @@ class LevelScene:
                     )
 
 
-            # =============================================
-            # SECONDARY — RIGHT MOUSE
-            # =============================================
-
             if mouse[2]:
 
                 self.use_secondary()
 
 
             # =================================================
-            # SPAWN NORMAL ENEMIES
+            # SPAWN
             # =================================================
 
-            self.spawn_timer -= dt
+            self.spawn_timer -= (
+                dt
+            )
 
 
             if (
-                self.spawn_timer
-                <= 0
+                self.spawn_timer <= 0
             ):
 
                 self.spawn_enemy()
@@ -2877,9 +2949,7 @@ class LevelScene:
                 self.enemies
             ):
 
-                if (
-                    enemy.can_shoot()
-                ):
+                if enemy.can_shoot():
 
                     projectile = (
                         enemy.shoot()
@@ -2897,16 +2967,15 @@ class LevelScene:
 
 
             # =================================================
-            # PLAYER PROJECTILE x ENEMY
+            # PLAYER SHOT x ENEMY
             # =================================================
 
             for projectile in list(
                 self.player_shots
             ):
 
-                # Plasma Bomb pode morrer dentro
-                # do loop, então precisamos sair.
                 if not projectile.alive():
+
                     continue
 
 
@@ -2915,10 +2984,12 @@ class LevelScene:
                 ):
 
                     if not projectile.alive():
+
                         break
 
 
                     if not enemy.alive():
+
                         continue
 
 
@@ -2939,7 +3010,7 @@ class LevelScene:
 
 
             # =================================================
-            # ENEMY PROJECTILE x PLAYER
+            # ENEMY SHOT x PLAYER
             # =================================================
 
             for projectile in list(
@@ -2969,8 +3040,7 @@ class LevelScene:
                 if damaged:
 
                     self.create_hit_spark(
-                        self.player
-                        .rect.center
+                        self.player.rect.center
                     )
 
 
@@ -2986,7 +3056,7 @@ class LevelScene:
 
 
             # =================================================
-            # ENEMY BODY x PLAYER
+            # ENEMY x PLAYER
             # =================================================
 
             for enemy in list(
@@ -3019,19 +3089,20 @@ class LevelScene:
                 )
 
 
-                # Inimigo comum explode ao colidir,
-                # mesmo se o shield absorver o dano.
                 if not is_boss:
 
                     center = (
                         enemy.rect.center
                     )
 
+
                     enemy.kill()
+
 
                     self.create_explosion(
                         center
                     )
+
 
                     self.sound.play(
                         "explosion"
@@ -3052,7 +3123,7 @@ class LevelScene:
 
 
             # =================================================
-            # PLAYER DEATH
+            # DEATH
             # =================================================
 
             if (
@@ -3060,8 +3131,7 @@ class LevelScene:
             ):
 
                 self.create_explosion(
-                    self.player
-                    .rect.center
+                    self.player.rect.center
                 )
 
 
@@ -3082,7 +3152,7 @@ class LevelScene:
 
 
             # =================================================
-            # LEVEL TIME COMPLETE
+            # COMPLETE TIMER
             # =================================================
 
             if (
@@ -3106,12 +3176,13 @@ class LevelScene:
             == "dying"
         ):
 
-            self.death_timer += dt
+            self.death_timer += (
+                dt
+            )
 
 
             if (
-                self.death_timer
-                >= 1.0
+                self.death_timer >= 1.0
             ):
 
                 self.game.change_scene(
@@ -3128,7 +3199,7 @@ class LevelScene:
 
 
         # =================================================
-        # ENDING / EXIT
+        # EXIT
         # =================================================
 
         elif (
@@ -3145,13 +3216,11 @@ class LevelScene:
             self.player.rect.center = (
 
                 round(
-                    self.player
-                    .position.x
+                    self.player.position.x
                 ),
 
                 round(
-                    self.player
-                    .position.y
+                    self.player.position.y
                 )
             )
 
@@ -3172,10 +3241,6 @@ class LevelScene:
         self,
         surface
     ):
-
-        # =================================================
-        # LOOP
-        # =================================================
 
         if (
             self.background_mode
@@ -3204,10 +3269,6 @@ class LevelScene:
             )
 
 
-        # =================================================
-        # SLOW PAN
-        # =================================================
-
         elif (
             self.background_mode
             == "slow_scroll"
@@ -3223,10 +3284,6 @@ class LevelScene:
                 )
             )
 
-
-        # =================================================
-        # STATIC
-        # =================================================
 
         else:
 
@@ -3248,14 +3305,12 @@ class LevelScene:
         screen
     ):
 
-        overlay = (
-            pygame.Surface(
-                (
-                    SCREEN_WIDTH,
-                    SCREEN_HEIGHT
-                ),
-                pygame.SRCALPHA
-            )
+        overlay = pygame.Surface(
+            (
+                SCREEN_WIDTH,
+                SCREEN_HEIGHT
+            ),
+            pygame.SRCALPHA
         )
 
 
@@ -3264,7 +3319,7 @@ class LevelScene:
                 0,
                 0,
                 0,
-                175
+                180
             )
         )
 
@@ -3367,8 +3422,8 @@ class LevelScene:
                 True,
                 (
                     90,
-                    110,
-                    100
+                    115,
+                    105
                 )
             )
         )
@@ -3394,14 +3449,12 @@ class LevelScene:
         screen
     ):
 
-        terminal = (
-            pygame.Surface(
-                (
-                    SCREEN_WIDTH - 80,
-                    210
-                ),
-                pygame.SRCALPHA
-            )
+        terminal = pygame.Surface(
+            (
+                SCREEN_WIDTH - 80,
+                210
+            ),
+            pygame.SRCALPHA
         )
 
 
@@ -3512,30 +3565,23 @@ class LevelScene:
     # DRAW
     # =====================================================
 
-    def draw(self, screen):
+    def draw(
+        self,
+        screen
+    ):
 
-        world = (
-            pygame.Surface(
-                (
-                    SCREEN_WIDTH,
-                    SCREEN_HEIGHT
-                )
+        world = pygame.Surface(
+            (
+                SCREEN_WIDTH,
+                SCREEN_HEIGHT
             )
         )
 
-
-        # =================================================
-        # BACKGROUND
-        # =================================================
 
         self.draw_background(
             world
         )
 
-
-        # =================================================
-        # WORLD OBJECTS
-        # =================================================
 
         self.player_shots.draw(
             world
@@ -3566,16 +3612,14 @@ class LevelScene:
         )
 
 
-        # =================================================
-        # PLAYER
-        # =================================================
-
         if (
             self.state
             != "dying"
         ):
 
-            draw_player = True
+            draw_player = (
+                True
+            )
 
 
             if (
@@ -3593,7 +3637,6 @@ class LevelScene:
                     )
 
                     % 2
-
                     == 0
                 )
 
@@ -3606,12 +3649,7 @@ class LevelScene:
                 )
 
 
-        # =================================================
-        # SCREEN SHAKE
-        # =================================================
-
         offset_x = 0
-
         offset_y = 0
 
 
@@ -3627,6 +3665,7 @@ class LevelScene:
                     self.shake_strength
                 )
             )
+
 
             offset_y = (
                 random.randint(
@@ -3663,11 +3702,19 @@ class LevelScene:
             == "intro"
         ):
 
+            level_name = (
+                self.config[
+                    "name"
+                ]
+            )
+
+
             text = (
                 self.medium_font.render(
                     (
-                        "LEVEL "
-                        f"{self.level_number}"
+                        f"LEVEL {self.level_number}"
+                        " - "
+                        f"{level_name}"
                     ),
                     True,
                     (
@@ -3708,12 +3755,15 @@ class LevelScene:
                 self.level_number,
 
                 self.run_progress
-                .nav_core_parts
+                .nav_core_parts,
+
+                self.run_progress
+                .nav_chips
             )
 
 
         # =================================================
-        # GENERAL MESSAGE
+        # MESSAGE
         # =================================================
 
         if (
@@ -3734,12 +3784,58 @@ class LevelScene:
             )
 
 
+            # Caso seja muito grande,
+            # reduz automaticamente.
+            max_width = (
+                SCREEN_WIDTH - 40
+            )
+
+
+            if (
+                text.get_width()
+                > max_width
+            ):
+
+                scale = (
+
+                    max_width
+                    / text.get_width()
+                )
+
+
+                new_width = (
+                    max_width
+                )
+
+
+                new_height = max(
+
+                    1,
+
+                    int(
+                        text.get_height()
+                        * scale
+                    )
+                )
+
+
+                text = (
+                    pygame.transform.smoothscale(
+                        text,
+                        (
+                            new_width,
+                            new_height
+                        )
+                    )
+                )
+
+
             screen.blit(
                 text,
                 text.get_rect(
                     center=(
                         SCREEN_WIDTH // 2,
-                        115
+                        100
                     )
                 )
             )
@@ -3772,15 +3868,11 @@ class LevelScene:
                 threat.get_rect(
                     center=(
                         SCREEN_WIDTH // 2,
-                        155
+                        150
                     )
                 )
             )
 
-
-        # =================================================
-        # PAUSE / TERMINAL
-        # =================================================
 
         if self.paused:
 

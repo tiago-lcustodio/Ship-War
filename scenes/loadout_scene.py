@@ -1,8 +1,7 @@
 import pygame
 
 from settings import (
-    SCREEN_WIDTH,
-    SCREEN_HEIGHT
+    SCREEN_WIDTH
 )
 
 from game_data import (
@@ -67,8 +66,29 @@ class LoadoutScene:
         )
 
 
+        self.category_rects = []
+
+        self.item_rects = []
+
+
+        self.equip_rect = pygame.Rect(
+            390,
+            590,
+            140,
+            42
+        )
+
+
+        self.back_rect = pygame.Rect(
+            190,
+            590,
+            140,
+            42
+        )
+
+
     # =====================================================
-    # OWNED LIST
+    # OWNED
     # =====================================================
 
     def get_items(
@@ -82,7 +102,10 @@ class LoadoutScene:
         )
 
 
-        if category == "PRIMARY":
+        if (
+            category
+            == "PRIMARY"
+        ):
 
             return [
 
@@ -98,7 +121,10 @@ class LoadoutScene:
             ]
 
 
-        if category == "SECONDARY":
+        if (
+            category
+            == "SECONDARY"
+        ):
 
             return [
 
@@ -114,7 +140,10 @@ class LoadoutScene:
             ]
 
 
-        if category == "DEFENSE":
+        if (
+            category
+            == "DEFENSE"
+        ):
 
             return [
 
@@ -144,6 +173,10 @@ class LoadoutScene:
         ]
 
 
+    # =====================================================
+    # EQUIP
+    # =====================================================
+
     def equip(
         self
     ):
@@ -156,6 +189,14 @@ class LoadoutScene:
         if not items:
 
             return
+
+
+        self.item_index = min(
+
+            self.item_index,
+
+            len(items) - 1
+        )
 
 
         selected_id = (
@@ -172,21 +213,30 @@ class LoadoutScene:
         )
 
 
-        if category == "PRIMARY":
+        if (
+            category
+            == "PRIMARY"
+        ):
 
             self.progress.equipped_primary = (
                 selected_id
             )
 
 
-        elif category == "SECONDARY":
+        elif (
+            category
+            == "SECONDARY"
+        ):
 
             self.progress.equipped_secondary = (
                 selected_id
             )
 
 
-        elif category == "DEFENSE":
+        elif (
+            category
+            == "DEFENSE"
+        ):
 
             self.progress.equipped_defense = (
                 selected_id
@@ -211,100 +261,166 @@ class LoadoutScene:
 
         if (
             event.type
-            != pygame.KEYDOWN
+            == pygame.KEYDOWN
         ):
 
-            return
+            if (
+                event.key
+                == pygame.K_ESCAPE
+            ):
+
+                self.game.show_map()
+
+                return
 
 
-        if (
-            event.key
-            == pygame.K_ESCAPE
-        ):
+            if (
+                event.key
+                == pygame.K_LEFT
+            ):
 
-            self.game.show_map()
+                self.category_index = (
 
-            return
+                    self.category_index - 1
 
-
-        if (
-            event.key
-            == pygame.K_LEFT
-        ):
-
-            self.category_index = (
-
-                self.category_index - 1
-
-            ) % len(
-                self.categories
-            )
+                ) % len(
+                    self.categories
+                )
 
 
-            self.item_index = 0
+                self.item_index = 0
+
+
+            elif (
+                event.key
+                == pygame.K_RIGHT
+            ):
+
+                self.category_index = (
+
+                    self.category_index + 1
+
+                ) % len(
+                    self.categories
+                )
+
+
+                self.item_index = 0
+
+
+            elif (
+                event.key
+                == pygame.K_UP
+            ):
+
+                items = (
+                    self.get_items()
+                )
+
+
+                if items:
+
+                    self.item_index = (
+
+                        self.item_index - 1
+
+                    ) % len(items)
+
+
+            elif (
+                event.key
+                == pygame.K_DOWN
+            ):
+
+                items = (
+                    self.get_items()
+                )
+
+
+                if items:
+
+                    self.item_index = (
+
+                        self.item_index + 1
+
+                    ) % len(items)
+
+
+            elif event.key in (
+                pygame.K_RETURN,
+                pygame.K_SPACE
+            ):
+
+                self.equip()
 
 
         elif (
-            event.key
-            == pygame.K_RIGHT
+            event.type
+            == pygame.MOUSEBUTTONDOWN
+
+            and event.button == 1
         ):
 
-            self.category_index = (
+            for (
+                index,
+                rect
+            ) in enumerate(
+                self.category_rects
+            ):
 
-                self.category_index + 1
+                if rect.collidepoint(
+                    event.pos
+                ):
 
-            ) % len(
-                self.categories
-            )
+                    self.category_index = (
+                        index
+                    )
 
+                    self.item_index = 0
 
-            self.item_index = 0
-
-
-        elif (
-            event.key
-            == pygame.K_UP
-        ):
-
-            items = (
-                self.get_items()
-            )
+                    return
 
 
-            if items:
+            for (
+                index,
+                rect
+            ) in enumerate(
+                self.item_rects
+            ):
 
-                self.item_index = (
+                if rect.collidepoint(
+                    event.pos
+                ):
 
-                    self.item_index - 1
+                    self.item_index = (
+                        index
+                    )
 
-                ) % len(items)
-
-
-        elif (
-            event.key
-            == pygame.K_DOWN
-        ):
-
-            items = (
-                self.get_items()
-            )
-
-
-            if items:
-
-                self.item_index = (
-
-                    self.item_index + 1
-
-                ) % len(items)
+                    return
 
 
-        elif event.key in (
-            pygame.K_RETURN,
-            pygame.K_SPACE
-        ):
+            if (
+                self.equip_rect
+                .collidepoint(
+                    event.pos
+                )
+            ):
 
-            self.equip()
+                self.equip()
+
+                return
+
+
+            if (
+                self.back_rect
+                .collidepoint(
+                    event.pos
+                )
+            ):
+
+                self.game.show_map()
+
+                return
 
 
     def update(
@@ -313,6 +429,50 @@ class LoadoutScene:
     ):
 
         pass
+
+
+    # =====================================================
+    # DRAW BUTTON
+    # =====================================================
+
+    def draw_button(
+        self,
+        screen,
+        rect,
+        text
+    ):
+
+        pygame.draw.rect(
+            screen,
+            (
+                55,
+                70,
+                72
+            ),
+            rect,
+            border_radius=5
+        )
+
+
+        label = (
+            self.small_font.render(
+                text,
+                True,
+                (
+                    235,
+                    225,
+                    200
+                )
+            )
+        )
+
+
+        screen.blit(
+            label,
+            label.get_rect(
+                center=rect.center
+            )
+        )
 
 
     # =====================================================
@@ -357,11 +517,14 @@ class LoadoutScene:
         )
 
 
-        # ==================================
-        # CATEGORY TABS
-        # ==================================
+        # =================================================
+        # TABS
+        # =================================================
 
-        x = 70
+        self.category_rects = []
+
+
+        x = 45
 
 
         for (
@@ -371,10 +534,37 @@ class LoadoutScene:
             self.categories
         ):
 
+            rect = pygame.Rect(
+                x,
+                90,
+                150,
+                38
+            )
+
+
+            self.category_rects.append(
+                rect
+            )
+
+
             selected = (
                 index
                 == self.category_index
             )
+
+
+            if selected:
+
+                pygame.draw.rect(
+                    screen,
+                    (
+                        45,
+                        65,
+                        70
+                    ),
+                    rect,
+                    border_radius=4
+                )
 
 
             color = (
@@ -406,19 +596,32 @@ class LoadoutScene:
 
             screen.blit(
                 text,
-                (
-                    x,
-                    105
+                text.get_rect(
+                    center=rect.center
                 )
             )
 
 
-            x += 155
+            x += 160
 
+
+        # =================================================
+        # ITEMS
+        # =================================================
 
         items = (
             self.get_items()
         )
+
+
+        if items:
+
+            self.item_index = min(
+
+                self.item_index,
+
+                len(items) - 1
+            )
 
 
         category = (
@@ -428,7 +631,10 @@ class LoadoutScene:
         )
 
 
-        y = 175
+        self.item_rects = []
+
+
+        y = 170
 
 
         for (
@@ -438,12 +644,33 @@ class LoadoutScene:
             items
         ):
 
-            if category == "PRIMARY":
+            rect = pygame.Rect(
+                90,
+                y - 7,
+                540,
+                38
+            )
 
-                name = (
+
+            self.item_rects.append(
+                rect
+            )
+
+
+            if (
+                category
+                == "PRIMARY"
+            ):
+
+                data = (
                     PRIMARY_WEAPONS[
                         item_id
-                    ][
+                    ]
+                )
+
+
+                name = (
+                    data[
                         "name"
                     ]
                 )
@@ -456,12 +683,20 @@ class LoadoutScene:
                 )
 
 
-            elif category == "SECONDARY":
+            elif (
+                category
+                == "SECONDARY"
+            ):
 
-                name = (
+                data = (
                     SECONDARY_WEAPONS[
                         item_id
-                    ][
+                    ]
+                )
+
+
+                name = (
+                    data[
                         "name"
                     ]
                 )
@@ -474,12 +709,20 @@ class LoadoutScene:
                 )
 
 
-            elif category == "DEFENSE":
+            elif (
+                category
+                == "DEFENSE"
+            ):
 
-                name = (
+                data = (
                     DEFENSE_MODULES[
                         item_id
-                    ][
+                    ]
+                )
+
+
+                name = (
+                    data[
                         "name"
                     ]
                 )
@@ -494,18 +737,22 @@ class LoadoutScene:
 
             else:
 
-                name = (
+                data = (
                     SHIPS[
                         item_id
-                    ][
+                    ]
+                )
+
+
+                name = (
+                    data[
                         "name"
                     ]
                 )
 
 
                 equipped = (
-                    self.progress
-                    .ship_id
+                    self.progress.ship_id
                     == item_id
                 )
 
@@ -516,11 +763,18 @@ class LoadoutScene:
             )
 
 
-            prefix = (
-                "> "
-                if selected
-                else "  "
-            )
+            if selected:
+
+                pygame.draw.rect(
+                    screen,
+                    (
+                        40,
+                        55,
+                        60
+                    ),
+                    rect,
+                    border_radius=4
+                )
 
 
             suffix = (
@@ -528,6 +782,18 @@ class LoadoutScene:
                 if equipped
                 else ""
             )
+
+
+            if (
+                data.get(
+                    "special",
+                    False
+                )
+            ):
+
+                suffix += (
+                    "   [SECRET]"
+                )
 
 
             color = (
@@ -550,9 +816,10 @@ class LoadoutScene:
 
             text = (
                 self.font.render(
-                    prefix
-                    + name
-                    + suffix,
+                    (
+                        name
+                        + suffix
+                    ),
                     True,
                     color
                 )
@@ -592,35 +859,21 @@ class LoadoutScene:
             chips.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    555
+                    545
                 )
             )
         )
 
 
-        controls = (
-            self.small_font.render(
-                (
-                    "LEFT/RIGHT CATEGORY   "
-                    "UP/DOWN SELECT   "
-                    "ENTER EQUIP   ESC MAP"
-                ),
-                True,
-                (
-                    180,
-                    190,
-                    190
-                )
-            )
+        self.draw_button(
+            screen,
+            self.back_rect,
+            "MAP"
         )
 
 
-        screen.blit(
-            controls,
-            controls.get_rect(
-                center=(
-                    SCREEN_WIDTH // 2,
-                    635
-                )
-            )
+        self.draw_button(
+            screen,
+            self.equip_rect,
+            "EQUIP"
         )

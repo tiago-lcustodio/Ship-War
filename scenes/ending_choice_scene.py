@@ -16,10 +16,14 @@ class EndingChoiceScene:
 
 
         self.options = [
-
-            "LEAVE THE SOLAR SYSTEM",
-
-            "STAY"
+            (
+                "LEAVE THE SOLAR SYSTEM",
+                "leave"
+            ),
+            (
+                "STAY",
+                "stay"
+            )
         ]
 
 
@@ -29,7 +33,7 @@ class EndingChoiceScene:
         self.title_font = (
             pygame.font.SysFont(
                 "couriernew",
-                42,
+                38,
                 bold=True
             )
         )
@@ -38,11 +42,48 @@ class EndingChoiceScene:
         self.font = (
             pygame.font.SysFont(
                 "couriernew",
-                25,
+                22,
                 bold=True
             )
         )
 
+
+        self.small_font = (
+            pygame.font.SysFont(
+                "couriernew",
+                15,
+                bold=True
+            )
+        )
+
+
+        self.option_rects = []
+
+
+    # =====================================================
+    # ACTIVATE
+    # =====================================================
+
+    def activate(
+        self,
+        index
+    ):
+
+        ending_type = (
+            self.options[
+                index
+            ][1]
+        )
+
+
+        self.game.show_ending(
+            ending_type
+        )
+
+
+    # =====================================================
+    # EVENTS
+    # =====================================================
 
     def handle_event(
         self,
@@ -51,38 +92,76 @@ class EndingChoiceScene:
 
         if (
             event.type
-            != pygame.KEYDOWN
+            == pygame.KEYDOWN
         ):
 
-            return
+            if event.key in (
+                pygame.K_UP,
+                pygame.K_LEFT
+            ):
 
+                self.selected = (
 
-        if event.key in (
-            pygame.K_UP,
-            pygame.K_DOWN
-        ):
+                    self.selected - 1
 
-            self.selected = (
-                1 - self.selected
-            )
-
-
-        elif event.key in (
-            pygame.K_RETURN,
-            pygame.K_SPACE
-        ):
-
-            if self.selected == 0:
-
-                self.game.show_ending(
-                    "leave"
+                ) % len(
+                    self.options
                 )
 
-            else:
 
-                self.game.show_ending(
-                    "stay"
+            elif event.key in (
+                pygame.K_DOWN,
+                pygame.K_RIGHT
+            ):
+
+                self.selected = (
+
+                    self.selected + 1
+
+                ) % len(
+                    self.options
                 )
+
+
+            elif event.key in (
+                pygame.K_RETURN,
+                pygame.K_SPACE
+            ):
+
+                self.activate(
+                    self.selected
+                )
+
+
+        elif (
+            event.type
+            == pygame.MOUSEBUTTONDOWN
+
+            and event.button == 1
+        ):
+
+            for (
+                index,
+                rect
+            ) in enumerate(
+                self.option_rects
+            ):
+
+                if rect.collidepoint(
+                    event.pos
+                ):
+
+                    self.selected = (
+                        index
+                    )
+
+
+                    self.activate(
+                        index
+                    )
+
+
+                    return
 
 
     def update(
@@ -92,6 +171,10 @@ class EndingChoiceScene:
 
         pass
 
+
+    # =====================================================
+    # DRAW
+    # =====================================================
 
     def draw(
         self,
@@ -109,12 +192,12 @@ class EndingChoiceScene:
 
         title = (
             self.title_font.render(
-                "NAVIGATION CORE ONLINE",
+                "THE NAVIGATION CORE IS COMPLETE",
                 True,
                 (
                     120,
-                    240,
-                    180
+                    235,
+                    210
                 )
             )
         )
@@ -149,18 +232,40 @@ class EndingChoiceScene:
             question.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    240
+                    190
                 )
             )
         )
 
 
+        self.option_rects = []
+
+
         for (
             index,
-            option
+            item
         ) in enumerate(
             self.options
         ):
+
+            label = (
+                item[0]
+            )
+
+
+            rect = pygame.Rect(
+                170,
+                285
+                + index * 100,
+                380,
+                60
+            )
+
+
+            self.option_rects.append(
+                rect
+            )
+
 
             selected = (
                 index
@@ -168,31 +273,46 @@ class EndingChoiceScene:
             )
 
 
+            pygame.draw.rect(
+                screen,
+                (
+                    65,
+                    85,
+                    75
+                )
+                if selected
+                else
+                (
+                    40,
+                    50,
+                    55
+                ),
+                rect,
+                border_radius=6
+            )
+
+
             color = (
+
                 (
                     255,
                     210,
                     80
                 )
+
                 if selected
+
                 else (
                     220,
                     220,
-                    210
+                    205
                 )
             )
 
 
-            prefix = (
-                "> "
-                if selected
-                else "  "
-            )
-
-
-            rendered = (
+            text = (
                 self.font.render(
-                    prefix + option,
+                    label,
                     True,
                     color
                 )
@@ -200,12 +320,32 @@ class EndingChoiceScene:
 
 
             screen.blit(
-                rendered,
-                rendered.get_rect(
-                    center=(
-                        SCREEN_WIDTH // 2,
-                        360
-                        + index * 65
-                    )
+                text,
+                text.get_rect(
+                    center=rect.center
                 )
             )
+
+
+        note = (
+            self.small_font.render(
+                "THERE IS NO RIGHT ANSWER.",
+                True,
+                (
+                    135,
+                    145,
+                    150
+                )
+            )
+        )
+
+
+        screen.blit(
+            note,
+            note.get_rect(
+                center=(
+                    SCREEN_WIDTH // 2,
+                    535
+                )
+            )
+        )

@@ -51,6 +51,15 @@ class BriefingScene:
         )
 
 
+        self.small_font = (
+            pygame.font.SysFont(
+                "couriernew",
+                13,
+                bold=True
+            )
+        )
+
+
         requested = (
             ASSETS_DIR
             / "backgrounds"
@@ -92,6 +101,26 @@ class BriefingScene:
         )
 
 
+        self.launch_rect = pygame.Rect(
+            370,
+            590,
+            280,
+            44
+        )
+
+
+        self.map_rect = pygame.Rect(
+            70,
+            590,
+            180,
+            44
+        )
+
+
+    # =====================================================
+    # EVENTS
+    # =====================================================
+
     def handle_event(
         self,
         event
@@ -99,28 +128,58 @@ class BriefingScene:
 
         if (
             event.type
-            != pygame.KEYDOWN
+            == pygame.KEYDOWN
         ):
 
-            return
+            if event.key in (
+                pygame.K_RETURN,
+                pygame.K_SPACE
+            ):
+
+                self.game.launch_level(
+                    self.level_number
+                )
 
 
-        if event.key in (
-            pygame.K_RETURN,
-            pygame.K_SPACE
-        ):
+            elif (
+                event.key
+                == pygame.K_ESCAPE
+            ):
 
-            self.game.launch_level(
-                self.level_number
-            )
+                self.game.show_map()
 
 
         elif (
-            event.key
-            == pygame.K_ESCAPE
+            event.type
+            == pygame.MOUSEBUTTONDOWN
+
+            and event.button == 1
         ):
 
-            self.game.show_map()
+            if (
+                self.launch_rect
+                .collidepoint(
+                    event.pos
+                )
+            ):
+
+                self.game.launch_level(
+                    self.level_number
+                )
+
+                return
+
+
+            if (
+                self.map_rect
+                .collidepoint(
+                    event.pos
+                )
+            ):
+
+                self.game.show_map()
+
+                return
 
 
     def update(
@@ -130,6 +189,54 @@ class BriefingScene:
 
         pass
 
+
+    # =====================================================
+    # BUTTON
+    # =====================================================
+
+    def draw_button(
+        self,
+        screen,
+        rect,
+        text
+    ):
+
+        pygame.draw.rect(
+            screen,
+            (
+                50,
+                65,
+                62
+            ),
+            rect,
+            border_radius=6
+        )
+
+
+        label = (
+            self.small_font.render(
+                text,
+                True,
+                (
+                    245,
+                    220,
+                    150
+                )
+            )
+        )
+
+
+        screen.blit(
+            label,
+            label.get_rect(
+                center=rect.center
+            )
+        )
+
+
+    # =====================================================
+    # DRAW
+    # =====================================================
 
     def draw(
         self,
@@ -199,11 +306,9 @@ class BriefingScene:
 
         subtitle = (
             self.font.render(
-                (
-                    self.config[
-                        "name"
-                    ]
-                ),
+                self.config[
+                    "name"
+                ],
                 True,
                 (
                     120,
@@ -314,25 +419,15 @@ class BriefingScene:
         )
 
 
-        start = (
-            self.font.render(
-                "PRESS ENTER TO LAUNCH",
-                True,
-                (
-                    245,
-                    205,
-                    100
-                )
-            )
+        self.draw_button(
+            screen,
+            self.map_rect,
+            "MAP"
         )
 
 
-        screen.blit(
-            start,
-            start.get_rect(
-                center=(
-                    SCREEN_WIDTH // 2,
-                    620
-                )
-            )
+        self.draw_button(
+            screen,
+            self.launch_rect,
+            "LAUNCH"
         )

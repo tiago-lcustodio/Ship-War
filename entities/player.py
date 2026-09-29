@@ -19,6 +19,48 @@ from entities.projectile import (
 )
 
 
+# =========================================================
+# WEAPON COLORS
+# =========================================================
+#
+# Todas usam o MESMO PNG.
+#
+# O código apenas aplica uma tonalidade diferente.
+#
+# =========================================================
+
+PRIMARY_SHOT_COLORS = {
+
+    0: (120, 220, 255),     # Pulse I - cyan
+
+    1: (80, 255, 255),      # Pulse II - cyan intenso
+
+    2: (100, 255, 150),     # Twin - verde
+
+    3: (255, 170, 70),      # Heavy - laranja
+
+    4: (255, 100, 190),     # Spread - rosa
+
+    5: (190, 100, 255),     # Plasma Lance - violeta
+
+    6: (255, 245, 170)      # Ancient Grey - dourado claro
+}
+
+
+SECONDARY_SHOT_COLORS = {
+
+    1: (255, 210, 80),      # Missile
+
+    2: (255, 90, 220),      # Plasma bomb
+
+    3: (100, 180, 255),     # EMP
+
+    4: (120, 255, 220),     # Defense burst
+
+    5: (130, 180, 255)      # Chain lightning
+}
+
+
 class Player(
     pygame.sprite.Sprite
 ):
@@ -39,14 +81,20 @@ class Player(
         # =====================================================
 
         self.image = image
-        self.shot_image = shot_image
+
+        self.shot_image = (
+            shot_image
+        )
 
 
         # =====================================================
         # SHIP
         # =====================================================
 
-        self.ship_config = ship_config
+        self.ship_config = (
+            ship_config
+        )
+
 
         self.ship_id = (
             ship_config[
@@ -54,11 +102,13 @@ class Player(
             ]
         )
 
+
         self.ship_name = (
             ship_config[
                 "name"
             ]
         )
+
 
         self.speed = (
             ship_config[
@@ -75,9 +125,11 @@ class Player(
             progress.max_hp
         )
 
+
         self.hp = (
             self.max_hp
         )
+
 
         self.money = (
             progress.money
@@ -85,31 +137,25 @@ class Player(
 
 
         # =====================================================
-        # LOADOUT IDS
+        # LOADOUT
         # =====================================================
 
         self.primary_id = (
             progress.equipped_primary
         )
 
+
         self.secondary_id = (
             progress.equipped_secondary
         )
+
 
         self.defense_id = (
             progress.equipped_defense
         )
 
 
-        # =====================================================
-        # COMPATIBILITY ALIASES
-        # =====================================================
-        #
-        # Mantém compatibilidade com partes antigas
-        # do HUD/código.
-        #
-        # =====================================================
-
+        # Compatibilidade.
         self.primary_weapon = (
             self.primary_id
         )
@@ -133,11 +179,13 @@ class Player(
             ]
         )
 
+
         self.secondary = (
             SECONDARY_WEAPONS[
                 self.secondary_id
             ]
         )
+
 
         self.defense = (
             DEFENSE_MODULES[
@@ -147,7 +195,7 @@ class Player(
 
 
         # =====================================================
-        # COMPATIBILITY NAMES
+        # EQUIPMENT NAMES
         # =====================================================
 
         self.weapon_name = (
@@ -156,11 +204,13 @@ class Player(
             ]
         )
 
+
         self.secondary_name = (
             self.secondary[
                 "name"
             ]
         )
+
 
         self.defense_name = (
             self.defense[
@@ -180,6 +230,7 @@ class Player(
             )
         )
 
+
         self.rect = (
             self.image.get_rect(
                 center=self.position
@@ -188,16 +239,12 @@ class Player(
 
 
         # =====================================================
-        # WEAPON TIMERS
+        # TIMERS
         # =====================================================
 
         self.primary_timer = 0
+
         self.secondary_timer = 0
-
-
-        # =====================================================
-        # INVULNERABILITY
-        # =====================================================
 
         self.invulnerable_timer = 0
 
@@ -207,11 +254,12 @@ class Player(
         # =====================================================
 
         self.overheat_shots = 0
+
         self.overheat_timer = 0
 
 
         # =====================================================
-        # DEFENSIVE MODULE
+        # DEFENSE
         # =====================================================
 
         self.shield_capacity = (
@@ -221,15 +269,21 @@ class Player(
             )
         )
 
+
         self.shield_points = (
             self.shield_capacity
         )
 
+
         self.shield_recharge_timer = 0
+
 
         self.reactive_timer = 0
 
-        self.emergency_repair_used = False
+
+        self.emergency_repair_used = (
+            False
+        )
 
 
     # =====================================================
@@ -237,34 +291,118 @@ class Player(
     # =====================================================
 
     @property
-    def hitbox(
-        self
-    ):
+    def hitbox(self):
 
         width = int(
             self.rect.width
             * 0.45
         )
 
+
         height = int(
             self.rect.height
             * 0.60
         )
 
-        hitbox = (
-            pygame.Rect(
-                0,
-                0,
-                width,
-                height
-            )
+
+        hitbox = pygame.Rect(
+            0,
+            0,
+            width,
+            height
         )
+
 
         hitbox.center = (
             self.rect.center
         )
 
+
         return hitbox
+
+
+    # =====================================================
+    # TINT PROJECTILE
+    # =====================================================
+
+    def tint_shot(
+        self,
+        image,
+        color
+    ):
+
+        """
+        Preserva transparência e detalhes do PNG,
+        alterando apenas sua tonalidade.
+
+        Funciona melhor quando shot_player.png
+        é branco/claro.
+        """
+
+        tinted = (
+            image.copy()
+        )
+
+
+        tinted.fill(
+
+            (
+                color[0],
+                color[1],
+                color[2],
+                255
+            ),
+
+            special_flags=
+            pygame.BLEND_RGBA_MULT
+        )
+
+
+        return tinted
+
+
+    def get_primary_shot_image(
+        self
+    ):
+
+        color = (
+            PRIMARY_SHOT_COLORS.get(
+                self.primary_id,
+                (
+                    255,
+                    255,
+                    255
+                )
+            )
+        )
+
+
+        return self.tint_shot(
+            self.shot_image,
+            color
+        )
+
+
+    def get_secondary_shot_image(
+        self
+    ):
+
+        color = (
+            SECONDARY_SHOT_COLORS.get(
+                self.secondary_id,
+                (
+                    255,
+                    255,
+                    255
+                )
+            )
+        )
+
+
+        return self.tint_shot(
+            self.shot_image,
+            color
+        )
 
 
     # =====================================================
@@ -281,10 +419,6 @@ class Player(
             pygame.Vector2()
         )
 
-
-        # =================================================
-        # MOVEMENT INPUT
-        # =================================================
 
         if (
             keys[
@@ -348,52 +482,58 @@ class Player(
             )
 
 
-        # =================================================
-        # APPLY MOVEMENT
-        # =================================================
-
         self.position += (
+
             direction
+
             * self.speed
+
             * dt
         )
 
 
         half_w = (
-            self.rect.width
-            / 2
+            self.rect.width / 2
         )
 
+
         half_h = (
-            self.rect.height
-            / 2
+            self.rect.height / 2
         )
 
 
         self.position.x = max(
+
             half_w,
+
             min(
                 SCREEN_WIDTH
                 - half_w,
+
                 self.position.x
             )
         )
 
 
         self.position.y = max(
+
             half_h,
+
             min(
                 PLAY_AREA_BOTTOM
                 - half_h,
+
                 self.position.y
             )
         )
 
 
         self.rect.center = (
+
             round(
                 self.position.x
             ),
+
             round(
                 self.position.y
             )
@@ -409,20 +549,24 @@ class Player(
             self.primary_timer - dt
         )
 
+
         self.secondary_timer = max(
             0,
             self.secondary_timer - dt
         )
+
 
         self.invulnerable_timer = max(
             0,
             self.invulnerable_timer - dt
         )
 
+
         self.overheat_timer = max(
             0,
             self.overheat_timer - dt
         )
+
 
         self.reactive_timer = max(
             0,
@@ -436,20 +580,23 @@ class Player(
 
         if (
             self.shield_capacity > 0
-            and
-            self.shield_points
+
+            and self.shield_points
             < self.shield_capacity
         ):
 
-            self.shield_recharge_timer += dt
+            self.shield_recharge_timer += (
+                dt
+            )
 
 
             recharge_time = (
+
                 self.defense[
                     "recharge_time"
                 ]
-                *
-                self.ship_config[
+
+                * self.ship_config[
                     "shield_recharge_modifier"
                 ]
             )
@@ -466,12 +613,10 @@ class Player(
 
 
     # =====================================================
-    # PRIMARY WEAPON
+    # PRIMARY FIRE
     # =====================================================
 
-    def shoot(
-        self
-    ):
+    def shoot(self):
 
         if (
             self.primary_timer > 0
@@ -488,11 +633,12 @@ class Player(
 
 
         cooldown = (
+
             self.primary[
                 "cooldown"
             ]
-            *
-            self.ship_config[
+
+            * self.ship_config[
                 "primary_cooldown_modifier"
             ]
         )
@@ -504,7 +650,7 @@ class Player(
 
 
         # =================================================
-        # OVERHEAT
+        # ANCIENT GREY OVERHEAT
         # =================================================
 
         if (
@@ -517,13 +663,13 @@ class Player(
 
             if (
                 self.overheat_shots
-                >=
-                self.primary[
+                >= self.primary[
                     "overheat_after"
                 ]
             ):
 
                 self.overheat_shots = 0
+
 
                 self.overheat_timer = (
                     self.primary[
@@ -542,26 +688,19 @@ class Player(
         )
 
 
-        # =================================================
-        # SINGLE
-        # =================================================
-
         if (
             pattern
             == "single"
         ):
 
             projectiles.append(
+
                 self.create_primary_projectile(
-                    offset_x=0,
-                    angle_degrees=0
+                    0,
+                    0
                 )
             )
 
-
-        # =================================================
-        # TWIN
-        # =================================================
 
         elif (
             pattern
@@ -569,23 +708,22 @@ class Player(
         ):
 
             projectiles.append(
+
                 self.create_primary_projectile(
-                    offset_x=-11,
-                    angle_degrees=0
+                    -11,
+                    0
                 )
             )
+
 
             projectiles.append(
+
                 self.create_primary_projectile(
-                    offset_x=11,
-                    angle_degrees=0
+                    11,
+                    0
                 )
             )
 
-
-        # =================================================
-        # SPREAD
-        # =================================================
 
         elif (
             pattern
@@ -593,23 +731,28 @@ class Player(
         ):
 
             projectiles.append(
+
                 self.create_primary_projectile(
-                    offset_x=0,
-                    angle_degrees=-12
+                    0,
+                    -12
                 )
             )
 
+
             projectiles.append(
+
                 self.create_primary_projectile(
-                    offset_x=0,
-                    angle_degrees=0
+                    0,
+                    0
                 )
             )
 
+
             projectiles.append(
+
                 self.create_primary_projectile(
-                    offset_x=0,
-                    angle_degrees=12
+                    0,
+                    12
                 )
             )
 
@@ -618,7 +761,7 @@ class Player(
 
 
     # =====================================================
-    # CREATE PRIMARY PROJECTILE
+    # PRIMARY PROJECTILE
     # =====================================================
 
     def create_primary_projectile(
@@ -627,11 +770,10 @@ class Player(
         angle_degrees
     ):
 
-        angle = (
-            math.radians(
-                angle_degrees
-            )
+        angle = math.radians(
+            angle_degrees
         )
+
 
         speed = (
             self.primary[
@@ -640,25 +782,24 @@ class Player(
         )
 
 
-        velocity = (
-            pygame.Vector2(
-                math.sin(
-                    angle
-                )
-                * speed,
+        velocity = pygame.Vector2(
 
-                -math.cos(
-                    angle
-                )
-                * speed
+            math.sin(
+                angle
             )
+            * speed,
+
+            -math.cos(
+                angle
+            )
+            * speed
         )
 
 
         return Projectile(
 
             image=
-            self.shot_image,
+            self.get_primary_shot_image(),
 
             center=(
                 self.rect.centerx
@@ -692,14 +833,15 @@ class Player(
     # SECONDARY
     # =====================================================
 
-    def can_use_secondary(
-        self
-    ):
+    def can_use_secondary(self):
 
         return (
-            self.secondary_id != 0
-            and
-            self.secondary_timer <= 0
+
+            self.secondary_id
+            != 0
+
+            and self.secondary_timer
+            <= 0
         )
 
 
@@ -708,11 +850,12 @@ class Player(
     ):
 
         self.secondary_timer = (
+
             self.secondary[
                 "cooldown"
             ]
-            *
-            self.ship_config[
+
+            * self.ship_config[
                 "secondary_cooldown_modifier"
             ]
         )
@@ -727,7 +870,9 @@ class Player(
     ):
 
         self.invulnerable_timer = max(
+
             self.invulnerable_timer,
+
             self.secondary[
                 "duration"
             ]
@@ -743,12 +888,9 @@ class Player(
         damage
     ):
 
-        # =================================================
-        # ALREADY INVULNERABLE
-        # =================================================
-
         if (
-            self.invulnerable_timer > 0
+            self.invulnerable_timer
+            > 0
         ):
 
             return False
@@ -763,10 +905,9 @@ class Player(
                 "kind"
             ]
             == "phase"
-            and
-            random.random()
-            <
-            self.defense[
+
+            and random.random()
+            < self.defense[
                 "phase_chance"
             ]
         ):
@@ -779,7 +920,7 @@ class Player(
 
 
         # =================================================
-        # NORMAL SHIELD
+        # SHIELD
         # =================================================
 
         if (
@@ -787,8 +928,8 @@ class Player(
                 "kind"
             ]
             == "shield"
-            and
-            self.shield_points > 0
+
+            and self.shield_points > 0
         ):
 
             self.shield_points -= 1
@@ -811,8 +952,9 @@ class Player(
                 "kind"
             ]
             == "reactive"
-            and
-            self.reactive_timer <= 0
+
+            and self.reactive_timer
+            <= 0
         ):
 
             self.reactive_timer = (
@@ -829,17 +971,19 @@ class Player(
 
 
         # =================================================
-        # ACTUAL HULL DAMAGE
+        # HULL DAMAGE
         # =================================================
 
         self.hp -= (
             damage
         )
 
+
         self.hp = max(
             0,
             self.hp
         )
+
 
         self.invulnerable_timer = (
             PLAYER_INVULNERABILITY
@@ -855,18 +999,19 @@ class Player(
                 "kind"
             ]
             == "repair"
-            and
-            not self.emergency_repair_used
-            and
-            self.hp <= 1
-            and
-            self.hp > 0
+
+            and not self.emergency_repair_used
+
+            and self.hp <= 1
+
+            and self.hp > 0
         ):
 
             self.hp = min(
                 self.max_hp,
                 self.hp + 1
             )
+
 
             self.emergency_repair_used = (
                 True
@@ -886,18 +1031,19 @@ class Player(
     ):
 
         self.hp = min(
+
             self.max_hp,
-            self.hp + amount
+
+            self.hp
+            + amount
         )
 
 
     # =====================================================
-    # DEAD?
+    # DEAD
     # =====================================================
 
-    def is_dead(
-        self
-    ):
+    def is_dead(self):
 
         return (
             self.hp <= 0

@@ -25,14 +25,23 @@ TITLE = "SHIP WAR"
 # =========================================================
 
 BOTTOM_PANEL_HEIGHT = 100
-PLAY_AREA_BOTTOM = SCREEN_HEIGHT - BOTTOM_PANEL_HEIGHT
+PLAY_AREA_BOTTOM = (
+    SCREEN_HEIGHT
+    - BOTTOM_PANEL_HEIGHT
+)
 
 
 # =========================================================
 # PLAYER
 # =========================================================
 
-PLAYER_WIDTH = 64
+# A largura é a referência.
+# A altura agora é calculada automaticamente
+# pela proporção original do PNG.
+PLAYER_WIDTH = 82
+
+# Mantido apenas por compatibilidade
+# com algum arquivo antigo que ainda importe.
 PLAYER_HEIGHT = 64
 
 PLAYER_INVULNERABILITY = 0.8
@@ -44,7 +53,6 @@ PLAYER_INVULNERABILITY = 0.8
 
 LEVEL_INTRO_DURATION = 2.0
 
-# Agora já próximo do tempo definitivo.
 DEFAULT_LEVEL_DURATION = 90
 
 
@@ -53,6 +61,7 @@ DEFAULT_LEVEL_DURATION = 90
 # =========================================================
 
 BACKGROUND_SPEED = 100
+
 SLOW_BACKGROUND_EXTRA_HEIGHT = 180
 
 

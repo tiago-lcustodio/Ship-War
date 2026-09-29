@@ -1,4 +1,3 @@
-import sys
 import pygame
 
 from settings import (
@@ -11,10 +10,49 @@ from settings import (
 from game import Game
 
 
+def normalize_event(event):
+    """
+    Faz o Enter do teclado numérico funcionar
+    exatamente como o Enter principal.
+
+    Isso vale para TODAS as scenes sem precisar
+    alterar cada uma individualmente.
+    """
+
+    if (
+        event.type
+        in (
+            pygame.KEYDOWN,
+            pygame.KEYUP
+        )
+        and
+        event.key
+        == pygame.K_KP_ENTER
+    ):
+
+        data = (
+            event.dict.copy()
+        )
+
+        data["key"] = (
+            pygame.K_RETURN
+        )
+
+        return pygame.event.Event(
+            event.type,
+            data
+        )
+
+    return event
+
+
 def main():
 
     pygame.init()
 
+    pygame.display.set_caption(
+        TITLE
+    )
 
     screen = (
         pygame.display.set_mode(
@@ -25,21 +63,10 @@ def main():
         )
     )
 
+    clock = pygame.time.Clock()
 
-    pygame.display.set_caption(
-        TITLE
-    )
-
-
-    clock = (
-        pygame.time.Clock()
-    )
-
-
-    game = (
-        Game(
-            screen
-        )
+    game = Game(
+        screen
     )
 
 
@@ -65,6 +92,13 @@ def main():
                 continue
 
 
+            event = (
+                normalize_event(
+                    event
+                )
+            )
+
+
             game.handle_event(
                 event
             )
@@ -82,8 +116,6 @@ def main():
 
 
     pygame.quit()
-
-    sys.exit()
 
 
 if __name__ == "__main__":
