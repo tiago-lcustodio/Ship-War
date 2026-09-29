@@ -1,4 +1,3 @@
-import math
 import pygame
 
 from settings import (
@@ -10,17 +9,13 @@ from settings import (
 from game_data import (
     MAP_LOCATIONS,
     MAP_CONNECTIONS,
-    TRADING_POSTS,
-    SHIPS
+    TRADING_POSTS
 )
 
 
 class MapScene:
 
-    def __init__(
-        self,
-        game
-    ):
+    def __init__(self, game):
 
         self.game = game
 
@@ -28,16 +23,25 @@ class MapScene:
             game.progress
         )
 
-
         self.current_location = (
             self.progress.next_level
         )
+
+        # Segurança caso algum password
+        # venha com localização inválida.
+        if (
+            self.current_location
+            not in MAP_LOCATIONS
+        ):
+
+            self.current_location = 1
+
+            self.progress.next_level = 1
 
 
         self.selected_location = (
             self.current_location
         )
-
 
         self.travel_target = None
 
@@ -50,21 +54,16 @@ class MapScene:
             pygame.Vector2(
                 MAP_LOCATIONS[
                     self.current_location
-                ][
-                    "position"
-                ]
+                ]["position"]
             )
         )
 
-
-        self.travel_speed = (
-            380
-        )
+        self.travel_speed = 380
 
 
-        # ==================================
+        # =================================================
         # FONTS
-        # ==================================
+        # =================================================
 
         self.title_font = (
             pygame.font.SysFont(
@@ -74,7 +73,6 @@ class MapScene:
             )
         )
 
-
         self.font = (
             pygame.font.SysFont(
                 "couriernew",
@@ -82,7 +80,6 @@ class MapScene:
                 bold=True
             )
         )
-
 
         self.small_font = (
             pygame.font.SysFont(
@@ -93,61 +90,62 @@ class MapScene:
         )
 
 
-        # ==================================
-        # ICONS
-        # ==================================
+        # =================================================
+        # OPTIONAL LOCATION IMAGES
+        # =================================================
 
         self.location_images = {}
 
-
         for (
-            level_id,
+            location_id,
             data
         ) in MAP_LOCATIONS.items():
+
+            sprite_name = (
+                data.get("sprite")
+            )
+
+            if not sprite_name:
+                continue
 
             path = (
                 ASSETS_DIR
                 / "map"
-                / data[
-                    "sprite"
-                ]
+                / sprite_name
             )
 
+            if not path.exists():
+                continue
 
-            if path.exists():
+            image = (
+                pygame.image.load(
+                    str(path)
+                ).convert_alpha()
+            )
 
-                image = (
-                    pygame.image.load(
-                        str(path)
-                    ).convert_alpha()
+            image = (
+                pygame.transform.smoothscale(
+                    image,
+                    (40, 40)
                 )
+            )
+
+            self.location_images[
+                location_id
+            ] = image
 
 
-                image = (
-                    pygame.transform.smoothscale(
-                        image,
-                        (
-                            40,
-                            40
-                        )
-                    )
-                )
+        # =================================================
+        # OPTIONAL SHIP IMAGE
+        # =================================================
 
-
-                self.location_images[
-                    level_id
-                ] = image
-
+        self.ship_image = None
 
         ship_path = (
             ASSETS_DIR
             / "map"
             / "map_ship.png"
         )
-
-
-        self.ship_image = None
-
 
         if ship_path.exists():
 
@@ -157,17 +155,17 @@ class MapScene:
                 ).convert_alpha()
             )
 
-
             self.ship_image = (
                 pygame.transform.smoothscale(
                     image,
-                    (
-                        34,
-                        34
-                    )
+                    (34, 34)
                 )
             )
 
+
+        # =================================================
+        # CLICK AREAS
+        # =================================================
 
         self.node_rects = {}
 
@@ -175,18 +173,28 @@ class MapScene:
 
 
         self.start_rect = pygame.Rect(
-            420,
+            430,
             600,
-            260,
+            250,
             44
         )
 
+        self.market_button_rect = (
+            pygame.Rect(
+                40,
+                600,
+                175,
+                44
+            )
+        )
 
-        self.market_button_rect = pygame.Rect(
-            40,
-            600,
-            260,
-            44
+        self.loadout_button_rect = (
+            pygame.Rect(
+                225,
+                600,
+                190,
+                44
+            )
         )
 
 
@@ -194,39 +202,24 @@ class MapScene:
     # GRAPH
     # =====================================================
 
-    def get_neighbors(
-        self,
-        location
-    ):
+    def get_neighbors(self, location):
 
         neighbors = []
 
-
-        for a, b in (
-            MAP_CONNECTIONS
-        ):
+        for a, b in MAP_CONNECTIONS:
 
             if a == location:
 
-                neighbors.append(
-                    b
-                )
-
+                neighbors.append(b)
 
             elif b == location:
 
-                neighbors.append(
-                    a
-                )
-
+                neighbors.append(a)
 
         return neighbors
 
 
-    def can_travel_to(
-        self,
-        target
-    ):
+    def can_travel_to(self, target):
 
         if (
             target
@@ -235,9 +228,8 @@ class MapScene:
 
             return True
 
-
-        if (
-            not self.progress
+        if not (
+            self.progress
             .is_discovered(
                 target
             )
@@ -245,7 +237,8 @@ class MapScene:
 
             return False
 
-
+        # O mapa continua exigindo
+        # viagens entre nós conectados.
         return (
             target
             in self.get_neighbors(
@@ -269,14 +262,11 @@ class MapScene:
         ) in TRADING_POSTS.items():
 
             if (
-                data[
-                    "location"
-                ]
+                data["location"]
                 == location
             ):
 
                 return market_id
-
 
         return None
 
@@ -292,9 +282,7 @@ class MapScene:
     ):
 
         if self.moving:
-
             return
-
 
         if not self.can_travel_to(
             target
@@ -302,7 +290,7 @@ class MapScene:
 
             return
 
-
+        # Já está ali.
         if (
             target
             == self.current_location
@@ -312,11 +300,9 @@ class MapScene:
                 target
             )
 
-
             if open_market:
 
                 self.open_market()
-
 
             return
 
@@ -325,33 +311,26 @@ class MapScene:
             target
         )
 
-
         self.pending_market = (
             open_market
         )
 
-
         self.moving = True
 
 
-    def arrive(
-        self
-    ):
+    def arrive(self):
 
         self.current_location = (
             self.travel_target
         )
 
-
         self.selected_location = (
             self.current_location
         )
 
-
         self.progress.next_level = (
             self.current_location
         )
-
 
         self.travel_target = None
 
@@ -369,30 +348,30 @@ class MapScene:
     # START LEVEL
     # =====================================================
 
-    def start_level(
-        self
-    ):
+    def start_level(self):
 
         if self.moving:
-
             return
-
 
         self.game.start_location(
             self.current_location
         )
 
 
-    def open_market(
-        self
-    ):
+    # =====================================================
+    # MARKET
+    # =====================================================
+
+    def open_market(self):
+
+        if self.moving:
+            return
 
         market_id = (
             self.get_market_at_location(
                 self.current_location
             )
         )
-
 
         if market_id:
 
@@ -405,10 +384,11 @@ class MapScene:
     # EVENTS
     # =====================================================
 
-    def handle_event(
-        self,
-        event
-    ):
+    def handle_event(self, event):
+
+        # =================================================
+        # KEYBOARD
+        # =================================================
 
         if (
             event.type
@@ -422,33 +402,59 @@ class MapScene:
 
                 self.start_level()
 
+                return
 
-            elif (
+
+            if (
                 event.key
                 == pygame.K_m
             ):
 
                 self.open_market()
 
+                return
 
-            elif (
+
+            if (
+                event.key
+                == pygame.K_l
+            ):
+
+                if not self.moving:
+
+                    self.game.show_loadout()
+
+                return
+
+
+            if (
                 event.key
                 == pygame.K_ESCAPE
             ):
 
                 self.game.show_menu()
 
+                return
 
-        elif (
+
+        # =================================================
+        # MOUSE
+        # =================================================
+
+        if (
             event.type
             == pygame.MOUSEBUTTONDOWN
 
             and event.button == 1
         ):
 
-            # =================================
-            # NODES
-            # =================================
+            if self.moving:
+                return
+
+
+            # =============================================
+            # MAP NODES
+            # =============================================
 
             for (
                 location,
@@ -466,9 +472,9 @@ class MapScene:
                     return
 
 
-            # =================================
+            # =============================================
             # MARKET ICONS
-            # =================================
+            # =============================================
 
             for (
                 location,
@@ -487,9 +493,9 @@ class MapScene:
                     return
 
 
-            # =================================
-            # BUTTONS
-            # =================================
+            # =============================================
+            # BOTTOM BUTTONS
+            # =============================================
 
             if (
                 self.start_rect
@@ -512,18 +518,28 @@ class MapScene:
 
                 self.open_market()
 
+                return
+
+
+            if (
+                self.loadout_button_rect
+                .collidepoint(
+                    event.pos
+                )
+            ):
+
+                self.game.show_loadout()
+
+                return
+
 
     # =====================================================
     # UPDATE
     # =====================================================
 
-    def update(
-        self,
-        dt
-    ):
+    def update(self, dt):
 
         if not self.moving:
-
             return
 
 
@@ -531,9 +547,7 @@ class MapScene:
             pygame.Vector2(
                 MAP_LOCATIONS[
                     self.travel_target
-                ][
-                    "position"
-                ]
+                ]["position"]
             )
         )
 
@@ -555,15 +569,11 @@ class MapScene:
         )
 
 
-        if (
-            distance
-            <= step
-        ):
+        if distance <= step:
 
             self.ship_position = (
                 destination
             )
-
 
             self.arrive()
 
@@ -573,8 +583,49 @@ class MapScene:
         if distance > 0:
 
             self.ship_position += (
+
                 difference.normalize()
+
                 * step
+            )
+
+
+    # =====================================================
+    # DRAW STARFIELD
+    # =====================================================
+
+    def draw_starfield(self, screen):
+
+        # Determinístico.
+        # Não pisca a cada frame.
+        for i in range(75):
+
+            x = (
+                i * 97
+            ) % SCREEN_WIDTH
+
+            y = (
+                i * 53
+            ) % 565
+
+            radius = (
+                2
+                if i % 11 == 0
+                else 1
+            )
+
+            pygame.draw.circle(
+                screen,
+                (
+                    90,
+                    115,
+                    145
+                ),
+                (
+                    x,
+                    y
+                ),
+                radius
             )
 
 
@@ -582,10 +633,7 @@ class MapScene:
     # DRAW
     # =====================================================
 
-    def draw(
-        self,
-        screen
-    ):
+    def draw(self, screen):
 
         screen.fill(
             (
@@ -596,48 +644,14 @@ class MapScene:
         )
 
 
-        # ==================================
-        # STARFIELD SIMPLES
-        # ==================================
-
-        for i in range(
-            70
-        ):
-
-            x = (
-                (
-                    i * 97
-                )
-                % SCREEN_WIDTH
-            )
+        self.draw_starfield(
+            screen
+        )
 
 
-            y = (
-                (
-                    i * 53
-                )
-                % 570
-            )
-
-
-            pygame.draw.circle(
-                screen,
-                (
-                    90,
-                    110,
-                    140
-                ),
-                (
-                    x,
-                    y
-                ),
-                1
-            )
-
-
-        # ==================================
+        # =================================================
         # TITLE
-        # ==================================
+        # =================================================
 
         title = (
             self.title_font.render(
@@ -651,82 +665,73 @@ class MapScene:
             )
         )
 
-
         screen.blit(
             title,
             title.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    32
+                    30
                 )
             )
         )
 
 
-        # ==================================
+        # =================================================
         # CONNECTIONS
-        # ==================================
+        # =================================================
 
-        for a, b in (
-            MAP_CONNECTIONS
-        ):
+        for a, b in MAP_CONNECTIONS:
 
-            # Uma rota secreta só aparece
-            # se os dois lados forem conhecidos.
-            if (
-                not self.progress
+            # Rota só aparece quando
+            # os dois pontos foram revelados.
+            if not (
+                self.progress
                 .is_discovered(a)
+            ):
 
-                or not self.progress
+                continue
+
+            if not (
+                self.progress
                 .is_discovered(b)
             ):
 
                 continue
 
 
-            pos_a = (
-                MAP_LOCATIONS[a][
-                    "position"
-                ]
-            )
-
-
-            pos_b = (
-                MAP_LOCATIONS[b][
-                    "position"
-                ]
-            )
-
-
             pygame.draw.line(
                 screen,
                 (
-                    75,
-                    110,
+                    70,
+                    105,
                     125
                 ),
-                pos_a,
-                pos_b,
+                MAP_LOCATIONS[a][
+                    "position"
+                ],
+                MAP_LOCATIONS[b][
+                    "position"
+                ],
                 2
             )
 
-
-        # ==================================
-        # NODES
-        # ==================================
 
         self.node_rects.clear()
 
         self.market_rects.clear()
 
 
+        # =================================================
+        # LOCATIONS
+        # =================================================
+
         for (
             location,
             data
         ) in MAP_LOCATIONS.items():
 
-            if (
-                not self.progress
+            if not (
+                self.progress
                 .is_discovered(
                     location
                 )
@@ -736,9 +741,7 @@ class MapScene:
 
 
             position = (
-                data[
-                    "position"
-                ]
+                data["position"]
             )
 
 
@@ -757,8 +760,13 @@ class MapScene:
             )
 
 
-            if location in (
-                self.location_images
+            # =============================================
+            # OPTIONAL IMAGE
+            # =============================================
+
+            if (
+                location
+                in self.location_images
             ):
 
                 image = (
@@ -767,43 +775,57 @@ class MapScene:
                     ]
                 )
 
-
                 rect = (
                     image.get_rect(
                         center=position
                     )
                 )
 
-
                 screen.blit(
                     image,
                     rect
                 )
 
+
+            # =============================================
+            # ICON FALLBACK
+            # =============================================
+
             else:
 
-                if completed:
+                if (
+                    location
+                    == self.current_location
+                ):
 
                     color = (
-                        110,
+                        255,
+                        225,
+                        110
+                    )
+
+                elif completed:
+
+                    color = (
+                        100,
                         220,
-                        170
+                        165
                     )
 
                 elif accessible:
 
                     color = (
-                        245,
                         210,
+                        190,
                         100
                     )
 
                 else:
 
                     color = (
-                        100,
-                        120,
-                        130
+                        95,
+                        115,
+                        125
                     )
 
 
@@ -815,13 +837,25 @@ class MapScene:
                 )
 
 
+                pygame.draw.circle(
+                    screen,
+                    (
+                        230,
+                        230,
+                        215
+                    ),
+                    position,
+                    10,
+                    1
+                )
+
+
                 rect = pygame.Rect(
                     0,
                     0,
                     34,
                     34
                 )
-
 
                 rect.center = (
                     position
@@ -830,19 +864,19 @@ class MapScene:
 
             self.node_rects[
                 location
-            ] = (
-                rect.inflate(
-                    12,
-                    12
-                )
+            ] = rect.inflate(
+                12,
+                12
             )
 
 
+            # =============================================
+            # LABEL
+            # =============================================
+
             label = (
                 self.small_font.render(
-                    data[
-                        "name"
-                    ],
+                    data["name"],
                     True,
                     (
                         210,
@@ -852,21 +886,20 @@ class MapScene:
                 )
             )
 
-
             screen.blit(
                 label,
                 label.get_rect(
                     center=(
                         position[0],
-                        position[1] + 29
+                        position[1] + 28
                     )
                 )
             )
 
 
-            # =================================
+            # =============================================
             # MARKET ICON
-            # =================================
+            # =============================================
 
             market_id = (
                 self.get_market_at_location(
@@ -886,10 +919,9 @@ class MapScene:
                     )
                 )
 
-
                 market_rect.center = (
-                    position[0] + 20,
-                    position[1] - 18
+                    position[0] + 19,
+                    position[1] - 17
                 )
 
 
@@ -929,14 +961,12 @@ class MapScene:
 
                 self.market_rects[
                     location
-                ] = (
-                    market_rect
-                )
+                ] = market_rect
 
 
-        # ==================================
+        # =================================================
         # PLAYER SHIP
-        # ==================================
+        # =================================================
 
         if self.ship_image:
 
@@ -954,15 +984,14 @@ class MapScene:
                 )
             )
 
-
             screen.blit(
                 self.ship_image,
                 rect
             )
 
+
         else:
 
-            # Triângulo temporário.
             x = round(
                 self.ship_position.x
             )
@@ -972,38 +1001,38 @@ class MapScene:
             )
 
 
+            # Nave simples tipo ponteiro.
             pygame.draw.polygon(
                 screen,
                 (
-                    230,
+                    235,
                     240,
-                    240
+                    235
                 ),
                 [
-                    (x, y - 13),
+                    (x, y - 14),
                     (x - 9, y + 9),
+                    (x, y + 5),
                     (x + 9, y + 9)
                 ]
             )
 
 
-        # ==================================
-        # INFO
-        # ==================================
+        # =================================================
+        # CURRENT LOCATION
+        # =================================================
 
         current_name = (
             MAP_LOCATIONS[
                 self.current_location
-            ][
-                "name"
-            ]
+            ]["name"]
         )
 
 
         info = (
             self.font.render(
                 (
-                    "CURRENT LOCATION: "
+                    "LOCATION: "
                     + current_name
                 ),
                 True,
@@ -1015,19 +1044,42 @@ class MapScene:
             )
         )
 
-
         screen.blit(
             info,
             (
                 25,
+                565
+            )
+        )
+
+
+        chips = (
+            self.small_font.render(
+                (
+                    "NAV CHIPS: "
+                    f"{self.progress.nav_chips}"
+                ),
+                True,
+                (
+                    100,
+                    220,
+                    235
+                )
+            )
+        )
+
+        screen.blit(
+            chips,
+            (
+                530,
                 570
             )
         )
 
 
-        # ==================================
+        # =================================================
         # MARKET BUTTON
-        # ==================================
+        # =================================================
 
         market = (
             self.get_market_at_location(
@@ -1056,7 +1108,7 @@ class MapScene:
 
 
         text = (
-            self.font.render(
+            self.small_font.render(
                 market_text,
                 True,
                 (
@@ -1072,15 +1124,52 @@ class MapScene:
             text,
             text.get_rect(
                 center=
-                self.market_button_rect
-                .center
+                self.market_button_rect.center
             )
         )
 
 
-        # ==================================
+        # =================================================
+        # LOADOUT BUTTON
+        # =================================================
+
+        pygame.draw.rect(
+            screen,
+            (
+                55,
+                70,
+                72
+            ),
+            self.loadout_button_rect,
+            border_radius=6
+        )
+
+
+        text = (
+            self.small_font.render(
+                "LOADOUT [L]",
+                True,
+                (
+                    230,
+                    220,
+                    190
+                )
+            )
+        )
+
+
+        screen.blit(
+            text,
+            text.get_rect(
+                center=
+                self.loadout_button_rect.center
+            )
+        )
+
+
+        # =================================================
         # START BUTTON
-        # ==================================
+        # =================================================
 
         pygame.draw.rect(
             screen,
@@ -1095,7 +1184,7 @@ class MapScene:
 
 
         start = (
-            self.font.render(
+            self.small_font.render(
                 "START MISSION [ENTER]",
                 True,
                 (

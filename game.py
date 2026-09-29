@@ -1,98 +1,54 @@
-from password_system import (
-    GameProgress
-)
+from password_system import GameProgress
 
-from game_data import (
-    LEVELS
-)
+from game_data import LEVELS
 
-from systems.sound_manager import (
-    SoundManager
-)
+from systems.sound_manager import SoundManager
 
-from scenes.menu_scene import (
-    MenuScene
-)
-
-from scenes.password_scene import (
-    PasswordScene
-)
-
-from scenes.briefing_scene import (
-    BriefingScene
-)
-
-from scenes.level_scene import (
-    LevelScene
-)
-
-from scenes.market_scene import (
-    MarketScene
-)
-
-from scenes.map_scene import (
-    MapScene
-)
-
-from scenes.ending_choice_scene import (
-    EndingChoiceScene
-)
-
-from scenes.ending_scene import (
-    EndingScene
-)
+from scenes.menu_scene import MenuScene
+from scenes.password_scene import PasswordScene
+from scenes.briefing_scene import BriefingScene
+from scenes.level_scene import LevelScene
+from scenes.market_scene import MarketScene
+from scenes.map_scene import MapScene
+from scenes.loadout_scene import LoadoutScene
+from scenes.ending_choice_scene import EndingChoiceScene
+from scenes.ending_scene import EndingScene
 
 
 class Game:
 
-    def __init__(
-        self,
-        screen
-    ):
+    def __init__(self, screen):
 
         self.screen = screen
 
         self.running = True
 
+        self.sound = SoundManager()
 
-        self.sound = (
-            SoundManager()
-        )
-
-
-        self.progress = (
-            GameProgress()
-        )
-
+        self.progress = GameProgress()
 
         self.current_scene = None
-
 
         self.show_menu()
 
 
-    def change_scene(
-        self,
-        scene
-    ):
+    # =====================================================
+    # SCENE
+    # =====================================================
 
-        self.current_scene = (
-            scene
-        )
+    def change_scene(self, scene):
+
+        self.current_scene = scene
 
 
     # =====================================================
     # MENU
     # =====================================================
 
-    def show_menu(
-        self
-    ):
+    def show_menu(self):
 
         self.change_scene(
-            MenuScene(
-                self
-            )
+            MenuScene(self)
         )
 
 
@@ -100,51 +56,89 @@ class Game:
     # NEW GAME
     # =====================================================
 
-    def new_game(
-        self
-    ):
+    def new_game(self):
 
-        self.progress = (
-            GameProgress(
+        self.progress = GameProgress(
 
-                next_level=1,
+            next_level=1,
 
-                money=0,
+            money=0,
 
-                max_hp=3,
+            max_hp=3,
 
-                ship_id=0,
+            continues=0,
 
-                nav_core_parts=0,
+            flags=0,
 
-                completed_mask=0,
+            nav_core_parts=0,
 
-                discovered_mask=1,
+            completed_mask=0,
 
-                route_items_mask=0
-            )
+            # Terra conhecida desde o início.
+            discovered_mask=1,
+
+            nav_chips=0,
+
+            ship_id=0,
+
+            equipped_primary=0,
+
+            equipped_secondary=0,
+
+            equipped_defense=0,
+
+            # Pulse I.
+            owned_primary_mask=1,
+
+            owned_secondary_mask=0,
+
+            owned_defense_mask=0,
+
+            # Classic Saucer.
+            owned_ships_mask=1
+        )
+
+        self.show_briefing(1)
+
+
+    # =====================================================
+    # PASSWORD
+    # =====================================================
+
+    def show_password_screen(self):
+
+        self.change_scene(
+            PasswordScene(self)
         )
 
 
-        # Primeira missão ainda começa
-        # diretamente pelo briefing.
-        self.show_briefing(
-            1
-        )
+    def resume_progress(self, progress):
+
+        self.progress = progress
+
+        # Password recuperado leva ao mapa.
+        self.show_map()
 
 
     # =====================================================
     # MAP
     # =====================================================
 
-    def show_map(
-        self
-    ):
+    def show_map(self):
 
         self.change_scene(
-            MapScene(
-                self
-            )
+            MapScene(self)
+        )
+
+
+    # =====================================================
+    # LOADOUT
+    # =====================================================
+
+    def show_loadout(self):
+
+        self.change_scene(
+            LoadoutScene(self)
         )
 
 
@@ -152,23 +146,14 @@ class Game:
     # START LOCATION
     # =====================================================
 
-    def start_location(
-        self,
-        level_number
-    ):
+    def start_location(self, level_number):
 
-        self.progress.next_level = (
+        self.progress.next_level = level_number
+
+        # Missão já concluída:
+        # replay pula briefing.
+        if self.progress.is_completed(
             level_number
-        )
-
-
-        # Briefing apenas enquanto
-        # a missão nunca foi completada.
-        if (
-            self.progress
-            .is_completed(
-                level_number
-            )
         ):
 
             self.launch_level(
@@ -186,18 +171,13 @@ class Game:
     # BRIEFING
     # =====================================================
 
-    def show_briefing(
-        self,
-        level_number
-    ):
+    def show_briefing(self, level_number):
 
         self.progress.next_level = (
             level_number
         )
 
-
         self.change_scene(
-
             BriefingScene(
                 self,
                 level_number
@@ -209,27 +189,20 @@ class Game:
     # LEVEL
     # =====================================================
 
-    def launch_level(
-        self,
-        level_number
-    ):
+    def launch_level(self, level_number):
 
         self.progress.next_level = (
             level_number
         )
 
-
         self.change_scene(
-
             LevelScene(
 
                 game=self,
 
-                progress=
-                self.progress,
+                progress=self.progress,
 
-                level_config=
-                LEVELS[
+                level_config=LEVELS[
                     level_number
                 ]
             )
@@ -237,46 +210,12 @@ class Game:
 
 
     # =====================================================
-    # PASSWORD
-    # =====================================================
-
-    def show_password_screen(
-        self
-    ):
-
-        self.change_scene(
-            PasswordScene(
-                self
-            )
-        )
-
-
-    def resume_progress(
-        self,
-        progress
-    ):
-
-        self.progress = (
-            progress
-        )
-
-
-        # Save recuperado vai direto
-        # para o mapa.
-        self.show_map()
-
-
-    # =====================================================
     # MARKET
     # =====================================================
 
-    def show_market(
-        self,
-        market_id
-    ):
+    def show_market(self, market_id):
 
         self.change_scene(
-
             MarketScene(
                 self,
                 market_id
@@ -285,7 +224,7 @@ class Game:
 
 
     # =====================================================
-    # AFTER LEVEL
+    # LEVEL COMPLETE
     # =====================================================
 
     def after_level_complete(
@@ -294,25 +233,28 @@ class Game:
         first_clear
     ):
 
-        # A campanha principal continua
-        # encerrando no Level 10.
+        # Apenas a campanha principal
+        # leva ao final.
         #
-        # As fases extras não interferem.
+        # Venus/Uranus/Neptune/Pluto
+        # nunca interferem nisso.
         if (
             completed_level == 10
+
             and first_clear
         ):
 
+            # A fase 10 exige a terceira peça
+            # dentro do próprio LevelScene.
             self.show_ending_choice()
 
             return
 
-
         self.show_map()
 
 
-    # Compatibilidade com versões antigas
-    # do LevelCompleteScene.
+    # Mantido caso alguma scene antiga
+    # ainda use este método.
     def continue_after_level(
         self,
         completed_level,
@@ -326,25 +268,16 @@ class Game:
     # ENDINGS
     # =====================================================
 
-    def show_ending_choice(
-        self
-    ):
+    def show_ending_choice(self):
 
         self.change_scene(
-
-            EndingChoiceScene(
-                self
-            )
+            EndingChoiceScene(self)
         )
 
 
-    def show_ending(
-        self,
-        ending_type
-    ):
+    def show_ending(self, ending_type):
 
         self.change_scene(
-
             EndingScene(
                 self,
                 ending_type
@@ -353,13 +286,10 @@ class Game:
 
 
     # =====================================================
-    # GENERAL
+    # MAIN LOOP INTERFACE
     # =====================================================
 
-    def handle_event(
-        self,
-        event
-    ):
+    def handle_event(self, event):
 
         if self.current_scene:
 
@@ -368,10 +298,7 @@ class Game:
             )
 
 
-    def update(
-        self,
-        dt
-    ):
+    def update(self, dt):
 
         if self.current_scene:
 
@@ -380,9 +307,7 @@ class Game:
             )
 
 
-    def draw(
-        self
-    ):
+    def draw(self):
 
         if self.current_scene:
 

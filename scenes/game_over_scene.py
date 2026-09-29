@@ -1,7 +1,8 @@
 import pygame
 
 from settings import (
-    SCREEN_WIDTH
+    SCREEN_WIDTH,
+    SCREEN_HEIGHT
 )
 
 
@@ -16,8 +17,9 @@ class GameOverScene:
 
         self.game = game
 
+        # Snapshot feito antes de entrar na fase.
         self.retry_progress = (
-            retry_progress
+            retry_progress.clone()
         )
 
         self.level_number = (
@@ -25,10 +27,19 @@ class GameOverScene:
         )
 
 
-        self.big_font = (
+        self.options = [
+            "RETRY",
+            "MAP"
+        ]
+
+
+        self.selected = 0
+
+
+        self.title_font = (
             pygame.font.SysFont(
                 "couriernew",
-                62,
+                48,
                 bold=True
             )
         )
@@ -43,10 +54,20 @@ class GameOverScene:
         )
 
 
-    def handle_event(
-        self,
-        event
-    ):
+        self.small_font = (
+            pygame.font.SysFont(
+                "couriernew",
+                15,
+                bold=True
+            )
+        )
+
+
+    # =====================================================
+    # EVENTS
+    # =====================================================
+
+    def handle_event(self, event):
 
         if (
             event.type
@@ -56,56 +77,115 @@ class GameOverScene:
             return
 
 
-        if event.key == pygame.K_r:
+        if (
+            event.key
+            == pygame.K_UP
+        ):
 
-            self.game.progress = (
-                self.retry_progress
+            self.selected = (
+
+                self.selected - 1
+
+            ) % len(
+                self.options
             )
 
 
-            self.game.launch_level(
-                self.level_number
+        elif (
+            event.key
+            == pygame.K_DOWN
+        ):
+
+            self.selected = (
+
+                self.selected + 1
+
+            ) % len(
+                self.options
             )
 
 
         elif event.key in (
             pygame.K_RETURN,
-            pygame.K_ESCAPE
+            pygame.K_SPACE
         ):
 
-            self.game.show_menu()
+            option = (
+                self.options[
+                    self.selected
+                ]
+            )
 
 
-    def update(
-        self,
-        dt
-    ):
+            if option == "RETRY":
+
+                # Restaura exatamente o estado
+                # anterior à tentativa.
+                self.game.progress = (
+                    self.retry_progress.clone()
+                )
+
+                # Retry direto.
+                # Não mostra o briefing novamente
+                # dentro da mesma tentativa.
+                self.game.launch_level(
+                    self.level_number
+                )
+
+
+            elif option == "MAP":
+
+                self.game.progress = (
+                    self.retry_progress.clone()
+                )
+
+                self.game.progress.next_level = (
+                    self.level_number
+                )
+
+                self.game.show_map()
+
+
+        elif (
+            event.key
+            == pygame.K_ESCAPE
+        ):
+
+            self.game.progress = (
+                self.retry_progress.clone()
+            )
+
+            self.game.show_map()
+
+
+    def update(self, dt):
 
         pass
 
 
-    def draw(
-        self,
-        screen
-    ):
+    # =====================================================
+    # DRAW
+    # =====================================================
+
+    def draw(self, screen):
 
         screen.fill(
             (
-                18,
-                8,
-                8
+                10,
+                10,
+                15
             )
         )
 
 
         title = (
-            self.big_font.render(
-                "GAME OVER",
+            self.title_font.render(
+                "SHIP DESTROYED",
                 True,
                 (
                     230,
-                    75,
-                    60
+                    90,
+                    80
                 )
             )
         )
@@ -116,55 +196,92 @@ class GameOverScene:
             title.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    230
+                    150
                 )
             )
         )
 
 
-        retry = (
-            self.font.render(
-                "R - RETRY LEVEL",
+        subtitle = (
+            self.small_font.render(
+                (
+                    "Mission progress from this "
+                    "attempt was lost."
+                ),
                 True,
                 (
-                    230,
-                    220,
-                    200
+                    180,
+                    180,
+                    175
                 )
             )
         )
 
 
         screen.blit(
-            retry,
-            retry.get_rect(
+            subtitle,
+            subtitle.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    360
+                    210
                 )
             )
         )
 
 
-        menu = (
-            self.font.render(
-                "ENTER - MAIN MENU",
-                True,
+        for (
+            index,
+            option
+        ) in enumerate(
+            self.options
+        ):
+
+            selected = (
+                index == self.selected
+            )
+
+
+            color = (
+
                 (
-                    230,
+                    255,
+                    210,
+                    80
+                )
+
+                if selected
+
+                else (
                     220,
-                    200
+                    220,
+                    205
                 )
             )
-        )
 
 
-        screen.blit(
-            menu,
-            menu.get_rect(
-                center=(
-                    SCREEN_WIDTH // 2,
-                    410
+            prefix = (
+                "> "
+                if selected
+                else "  "
+            )
+
+
+            text = (
+                self.font.render(
+                    prefix + option,
+                    True,
+                    color
                 )
             )
-        )
+
+
+            screen.blit(
+                text,
+                text.get_rect(
+                    center=(
+                        SCREEN_WIDTH // 2,
+                        340
+                        + index * 60
+                    )
+                )
+            )

@@ -1,5 +1,7 @@
+import math
+
 from settings import (
-    PLAY_AREA_BOTTOM
+    SCREEN_WIDTH
 )
 
 
@@ -9,73 +11,74 @@ def horizontal(
 ):
 
     enemy.position.x += (
-        enemy.direction
-        * enemy.speed
+        enemy.horizontal_direction
+        * enemy.horizontal_speed
         * dt
     )
 
 
-    enemy.position.y += (
-        enemy.vertical_speed
-        * dt
+    margin = 30
+
+
+    if (
+        enemy.position.x < margin
+    ):
+
+        enemy.position.x = margin
+
+        enemy.horizontal_direction = 1
+
+
+    elif (
+        enemy.position.x
+        > SCREEN_WIDTH - margin
+    ):
+
+        enemy.position.x = (
+            SCREEN_WIDTH - margin
+        )
+
+        enemy.horizontal_direction = -1
+
+
+def zigzag(
+    enemy,
+    dt
+):
+
+    enemy.movement_time += (
+        dt
     )
 
 
-    enemy.rect.center = (
-        round(
+    enemy.position.x = (
+
+        enemy.base_x
+
+        + math.sin(
+            enemy.movement_time
+            * 3.2
+        )
+
+        * enemy.horizontal_speed
+        * 0.55
+    )
+
+
+    enemy.position.x = max(
+
+        30,
+
+        min(
+            SCREEN_WIDTH - 30,
             enemy.position.x
-        ),
-        round(
-            enemy.position.y
         )
     )
-
-
-    top_limit = 70
-
-    bottom_limit = (
-        PLAY_AREA_BOTTOM - 40
-    )
-
-
-    if (
-        enemy.rect.top
-        < top_limit
-    ):
-
-        enemy.rect.top = (
-            top_limit
-        )
-
-
-        enemy.position.y = (
-            enemy.rect.centery
-        )
-
-
-        enemy.vertical_speed *= -1
-
-
-    if (
-        enemy.rect.bottom
-        > bottom_limit
-    ):
-
-        enemy.rect.bottom = (
-            bottom_limit
-        )
-
-
-        enemy.position.y = (
-            enemy.rect.centery
-        )
-
-
-        enemy.vertical_speed *= -1
 
 
 MOVEMENT_PATTERNS = {
 
-    "horizontal":
-    horizontal
+    "horizontal": horizontal,
+
+    "zigzag": zigzag
 }

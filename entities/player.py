@@ -1,12 +1,17 @@
+import math
+import random
 import pygame
 
 from settings import (
     SCREEN_WIDTH,
     PLAY_AREA_BOTTOM,
-    PLAYER_FIRE_COOLDOWN,
-    PLAYER_INVULNERABILITY,
-    PLAYER_SHOT_SPEED,
-    PLAYER_SHOT_DAMAGE
+    PLAYER_INVULNERABILITY
+)
+
+from game_data import (
+    PRIMARY_WEAPONS,
+    SECONDARY_WEAPONS,
+    DEFENSE_MODULES
 )
 
 from entities.projectile import (
@@ -23,82 +28,213 @@ class Player(
         image,
         shot_image,
         ship_config,
-        max_hp,
-        money=0
+        progress
     ):
 
         super().__init__()
 
 
-        self.image = image
+        # =====================================================
+        # SPRITE
+        # =====================================================
 
-        self.rect = (
-            self.image.get_rect()
+        self.image = image
+        self.shot_image = shot_image
+
+
+        # =====================================================
+        # SHIP
+        # =====================================================
+
+        self.ship_config = ship_config
+
+        self.ship_id = (
+            ship_config[
+                "id"
+            ]
         )
 
+        self.ship_name = (
+            ship_config[
+                "name"
+            ]
+        )
+
+        self.speed = (
+            ship_config[
+                "speed"
+            ]
+        )
+
+
+        # =====================================================
+        # HULL / MONEY
+        # =====================================================
+
+        self.max_hp = (
+            progress.max_hp
+        )
+
+        self.hp = (
+            self.max_hp
+        )
+
+        self.money = (
+            progress.money
+        )
+
+
+        # =====================================================
+        # LOADOUT IDS
+        # =====================================================
+
+        self.primary_id = (
+            progress.equipped_primary
+        )
+
+        self.secondary_id = (
+            progress.equipped_secondary
+        )
+
+        self.defense_id = (
+            progress.equipped_defense
+        )
+
+
+        # =====================================================
+        # COMPATIBILITY ALIASES
+        # =====================================================
+        #
+        # Mantém compatibilidade com partes antigas
+        # do HUD/código.
+        #
+        # =====================================================
+
+        self.primary_weapon = (
+            self.primary_id
+        )
+
+        self.secondary_weapon = (
+            self.secondary_id
+        )
+
+        self.defense_module = (
+            self.defense_id
+        )
+
+
+        # =====================================================
+        # EQUIPMENT CONFIG
+        # =====================================================
+
+        self.primary = (
+            PRIMARY_WEAPONS[
+                self.primary_id
+            ]
+        )
+
+        self.secondary = (
+            SECONDARY_WEAPONS[
+                self.secondary_id
+            ]
+        )
+
+        self.defense = (
+            DEFENSE_MODULES[
+                self.defense_id
+            ]
+        )
+
+
+        # =====================================================
+        # COMPATIBILITY NAMES
+        # =====================================================
+
+        self.weapon_name = (
+            self.primary[
+                "name"
+            ]
+        )
+
+        self.secondary_name = (
+            self.secondary[
+                "name"
+            ]
+        )
+
+        self.defense_name = (
+            self.defense[
+                "name"
+            ]
+        )
+
+
+        # =====================================================
+        # POSITION
+        # =====================================================
 
         self.position = (
             pygame.Vector2(
                 SCREEN_WIDTH / 2,
-                PLAY_AREA_BOTTOM - 60
+                PLAY_AREA_BOTTOM - 80
+            )
+        )
+
+        self.rect = (
+            self.image.get_rect(
+                center=self.position
             )
         )
 
 
-        self.rect.center = (
-            self.position
-        )
+        # =====================================================
+        # WEAPON TIMERS
+        # =====================================================
+
+        self.primary_timer = 0
+        self.secondary_timer = 0
 
 
-        self.ship_config = (
-            ship_config
-        )
-
-
-        self.ship_id = (
-            ship_config["id"]
-        )
-
-
-        self.ship_name = (
-            ship_config["name"]
-        )
-
-
-        self.speed = (
-            ship_config["speed"]
-        )
-
-
-        self.max_hp = (
-            max_hp
-        )
-
-
-        self.hp = (
-            max_hp
-        )
-
-
-        self.money = (
-            money
-        )
-
-
-        self.weapon_name = (
-            "PULSE"
-        )
-
-
-        self.shot_image = (
-            shot_image
-        )
-
-
-        self.fire_timer = 0
+        # =====================================================
+        # INVULNERABILITY
+        # =====================================================
 
         self.invulnerable_timer = 0
 
+
+        # =====================================================
+        # ANCIENT GREY CANNON
+        # =====================================================
+
+        self.overheat_shots = 0
+        self.overheat_timer = 0
+
+
+        # =====================================================
+        # DEFENSIVE MODULE
+        # =====================================================
+
+        self.shield_capacity = (
+            self.defense.get(
+                "capacity",
+                0
+            )
+        )
+
+        self.shield_points = (
+            self.shield_capacity
+        )
+
+        self.shield_recharge_timer = 0
+
+        self.reactive_timer = 0
+
+        self.emergency_repair_used = False
+
+
+    # =====================================================
+    # HITBOX
+    # =====================================================
 
     @property
     def hitbox(
@@ -106,30 +242,34 @@ class Player(
     ):
 
         width = int(
-            self.rect.width * 0.45
+            self.rect.width
+            * 0.45
         )
-
 
         height = int(
-            self.rect.height * 0.60
+            self.rect.height
+            * 0.60
         )
 
-
-        hitbox = pygame.Rect(
-            0,
-            0,
-            width,
-            height
+        hitbox = (
+            pygame.Rect(
+                0,
+                0,
+                width,
+                height
+            )
         )
-
 
         hitbox.center = (
             self.rect.center
         )
 
-
         return hitbox
 
+
+    # =====================================================
+    # UPDATE
+    # =====================================================
 
     def update(
         self,
@@ -137,39 +277,62 @@ class Player(
         keys
     ):
 
-        direction = pygame.Vector2(
-            0,
-            0
+        direction = (
+            pygame.Vector2()
         )
 
 
+        # =================================================
+        # MOVEMENT INPUT
+        # =================================================
+
         if (
-            keys[pygame.K_LEFT]
-            or keys[pygame.K_a]
+            keys[
+                pygame.K_LEFT
+            ]
+            or
+            keys[
+                pygame.K_a
+            ]
         ):
 
             direction.x -= 1
 
 
         if (
-            keys[pygame.K_RIGHT]
-            or keys[pygame.K_d]
+            keys[
+                pygame.K_RIGHT
+            ]
+            or
+            keys[
+                pygame.K_d
+            ]
         ):
 
             direction.x += 1
 
 
         if (
-            keys[pygame.K_UP]
-            or keys[pygame.K_w]
+            keys[
+                pygame.K_UP
+            ]
+            or
+            keys[
+                pygame.K_w
+            ]
         ):
 
             direction.y -= 1
 
 
         if (
-            keys[pygame.K_DOWN]
-            or keys[pygame.K_s]
+            keys[
+                pygame.K_DOWN
+            ]
+            or
+            keys[
+                pygame.K_s
+            ]
         ):
 
             direction.y += 1
@@ -185,6 +348,10 @@ class Player(
             )
 
 
+        # =================================================
+        # APPLY MOVEMENT
+        # =================================================
+
         self.position += (
             direction
             * self.speed
@@ -192,32 +359,32 @@ class Player(
         )
 
 
-        half_width = (
-            self.rect.width / 2
+        half_w = (
+            self.rect.width
+            / 2
         )
 
-
-        half_height = (
-            self.rect.height / 2
+        half_h = (
+            self.rect.height
+            / 2
         )
 
 
         self.position.x = max(
-            half_width,
+            half_w,
             min(
                 SCREEN_WIDTH
-                - half_width,
+                - half_w,
                 self.position.x
             )
         )
 
 
-        # Mantém o player fora do painel inferior.
         self.position.y = max(
-            half_height + 55,
+            half_h,
             min(
                 PLAY_AREA_BOTTOM
-                - half_height,
+                - half_h,
                 self.position.y
             )
         )
@@ -233,30 +400,258 @@ class Player(
         )
 
 
-        if self.fire_timer > 0:
+        # =================================================
+        # TIMERS
+        # =================================================
 
-            self.fire_timer -= dt
+        self.primary_timer = max(
+            0,
+            self.primary_timer - dt
+        )
 
+        self.secondary_timer = max(
+            0,
+            self.secondary_timer - dt
+        )
+
+        self.invulnerable_timer = max(
+            0,
+            self.invulnerable_timer - dt
+        )
+
+        self.overheat_timer = max(
+            0,
+            self.overheat_timer - dt
+        )
+
+        self.reactive_timer = max(
+            0,
+            self.reactive_timer - dt
+        )
+
+
+        # =================================================
+        # SHIELD RECHARGE
+        # =================================================
 
         if (
-            self.invulnerable_timer
-            > 0
+            self.shield_capacity > 0
+            and
+            self.shield_points
+            < self.shield_capacity
         ):
 
-            self.invulnerable_timer -= dt
+            self.shield_recharge_timer += dt
 
+
+            recharge_time = (
+                self.defense[
+                    "recharge_time"
+                ]
+                *
+                self.ship_config[
+                    "shield_recharge_modifier"
+                ]
+            )
+
+
+            if (
+                self.shield_recharge_timer
+                >= recharge_time
+            ):
+
+                self.shield_points += 1
+
+                self.shield_recharge_timer = 0
+
+
+    # =====================================================
+    # PRIMARY WEAPON
+    # =====================================================
 
     def shoot(
         self
     ):
 
-        if self.fire_timer > 0:
+        if (
+            self.primary_timer > 0
+        ):
 
-            return None
+            return []
 
 
-        self.fire_timer = (
-            PLAYER_FIRE_COOLDOWN
+        if (
+            self.overheat_timer > 0
+        ):
+
+            return []
+
+
+        cooldown = (
+            self.primary[
+                "cooldown"
+            ]
+            *
+            self.ship_config[
+                "primary_cooldown_modifier"
+            ]
+        )
+
+
+        self.primary_timer = (
+            cooldown
+        )
+
+
+        # =================================================
+        # OVERHEAT
+        # =================================================
+
+        if (
+            "overheat_after"
+            in self.primary
+        ):
+
+            self.overheat_shots += 1
+
+
+            if (
+                self.overheat_shots
+                >=
+                self.primary[
+                    "overheat_after"
+                ]
+            ):
+
+                self.overheat_shots = 0
+
+                self.overheat_timer = (
+                    self.primary[
+                        "overheat_time"
+                    ]
+                )
+
+
+        projectiles = []
+
+
+        pattern = (
+            self.primary[
+                "pattern"
+            ]
+        )
+
+
+        # =================================================
+        # SINGLE
+        # =================================================
+
+        if (
+            pattern
+            == "single"
+        ):
+
+            projectiles.append(
+                self.create_primary_projectile(
+                    offset_x=0,
+                    angle_degrees=0
+                )
+            )
+
+
+        # =================================================
+        # TWIN
+        # =================================================
+
+        elif (
+            pattern
+            == "twin"
+        ):
+
+            projectiles.append(
+                self.create_primary_projectile(
+                    offset_x=-11,
+                    angle_degrees=0
+                )
+            )
+
+            projectiles.append(
+                self.create_primary_projectile(
+                    offset_x=11,
+                    angle_degrees=0
+                )
+            )
+
+
+        # =================================================
+        # SPREAD
+        # =================================================
+
+        elif (
+            pattern
+            == "spread"
+        ):
+
+            projectiles.append(
+                self.create_primary_projectile(
+                    offset_x=0,
+                    angle_degrees=-12
+                )
+            )
+
+            projectiles.append(
+                self.create_primary_projectile(
+                    offset_x=0,
+                    angle_degrees=0
+                )
+            )
+
+            projectiles.append(
+                self.create_primary_projectile(
+                    offset_x=0,
+                    angle_degrees=12
+                )
+            )
+
+
+        return projectiles
+
+
+    # =====================================================
+    # CREATE PRIMARY PROJECTILE
+    # =====================================================
+
+    def create_primary_projectile(
+        self,
+        offset_x,
+        angle_degrees
+    ):
+
+        angle = (
+            math.radians(
+                angle_degrees
+            )
+        )
+
+        speed = (
+            self.primary[
+                "speed"
+            ]
+        )
+
+
+        velocity = (
+            pygame.Vector2(
+                math.sin(
+                    angle
+                )
+                * speed,
+
+                -math.cos(
+                    angle
+                )
+                * speed
+            )
         )
 
 
@@ -265,47 +660,240 @@ class Player(
             image=
             self.shot_image,
 
-            x=
-            self.rect.centerx,
+            center=(
+                self.rect.centerx
+                + offset_x,
 
-            y=
-            self.rect.top,
+                self.rect.top
+            ),
 
-            velocity_x=0,
-
-            velocity_y=
-            -PLAYER_SHOT_SPEED,
+            velocity=
+            velocity,
 
             damage=
-            PLAYER_SHOT_DAMAGE,
+            self.primary[
+                "damage"
+            ],
 
-            owner="player"
+            owner=
+            "player",
+
+            kind=
+            "primary",
+
+            max_hits=
+            self.primary[
+                "max_hits"
+            ]
         )
 
+
+    # =====================================================
+    # SECONDARY
+    # =====================================================
+
+    def can_use_secondary(
+        self
+    ):
+
+        return (
+            self.secondary_id != 0
+            and
+            self.secondary_timer <= 0
+        )
+
+
+    def consume_secondary_cooldown(
+        self
+    ):
+
+        self.secondary_timer = (
+            self.secondary[
+                "cooldown"
+            ]
+            *
+            self.ship_config[
+                "secondary_cooldown_modifier"
+            ]
+        )
+
+
+    # =====================================================
+    # DEFENSE BURST
+    # =====================================================
+
+    def activate_defense_burst(
+        self
+    ):
+
+        self.invulnerable_timer = max(
+            self.invulnerable_timer,
+            self.secondary[
+                "duration"
+            ]
+        )
+
+
+    # =====================================================
+    # DAMAGE
+    # =====================================================
 
     def take_damage(
         self,
         damage
     ):
 
+        # =================================================
+        # ALREADY INVULNERABLE
+        # =================================================
+
         if (
-            self.invulnerable_timer
-            > 0
+            self.invulnerable_timer > 0
         ):
 
             return False
 
 
-        self.hp -= damage
+        # =================================================
+        # PHASE SHIELD
+        # =================================================
 
+        if (
+            self.defense[
+                "kind"
+            ]
+            == "phase"
+            and
+            random.random()
+            <
+            self.defense[
+                "phase_chance"
+            ]
+        ):
+
+            self.invulnerable_timer = (
+                0.20
+            )
+
+            return False
+
+
+        # =================================================
+        # NORMAL SHIELD
+        # =================================================
+
+        if (
+            self.defense[
+                "kind"
+            ]
+            == "shield"
+            and
+            self.shield_points > 0
+        ):
+
+            self.shield_points -= 1
+
+            self.shield_recharge_timer = 0
+
+            self.invulnerable_timer = (
+                0.20
+            )
+
+            return False
+
+
+        # =================================================
+        # REACTIVE ARMOR
+        # =================================================
+
+        if (
+            self.defense[
+                "kind"
+            ]
+            == "reactive"
+            and
+            self.reactive_timer <= 0
+        ):
+
+            self.reactive_timer = (
+                self.defense[
+                    "cooldown"
+                ]
+            )
+
+            self.invulnerable_timer = (
+                0.20
+            )
+
+            return False
+
+
+        # =================================================
+        # ACTUAL HULL DAMAGE
+        # =================================================
+
+        self.hp -= (
+            damage
+        )
+
+        self.hp = max(
+            0,
+            self.hp
+        )
 
         self.invulnerable_timer = (
             PLAYER_INVULNERABILITY
         )
 
 
+        # =================================================
+        # EMERGENCY REPAIR
+        # =================================================
+
+        if (
+            self.defense[
+                "kind"
+            ]
+            == "repair"
+            and
+            not self.emergency_repair_used
+            and
+            self.hp <= 1
+            and
+            self.hp > 0
+        ):
+
+            self.hp = min(
+                self.max_hp,
+                self.hp + 1
+            )
+
+            self.emergency_repair_used = (
+                True
+            )
+
+
         return True
 
+
+    # =====================================================
+    # HEAL
+    # =====================================================
+
+    def heal(
+        self,
+        amount
+    ):
+
+        self.hp = min(
+            self.max_hp,
+            self.hp + amount
+        )
+
+
+    # =====================================================
+    # DEAD?
+    # =====================================================
 
     def is_dead(
         self

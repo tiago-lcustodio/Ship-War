@@ -17,8 +17,7 @@ class Pickup(
         self,
         pickup_type,
         center,
-        value=0,
-        route_item=None
+        value=0
     ):
 
         super().__init__()
@@ -31,11 +30,6 @@ class Pickup(
 
         self.value = (
             value
-        )
-
-
-        self.route_item = (
-            route_item
         )
 
 
@@ -74,7 +68,7 @@ class Pickup(
 
 
         self.image = (
-            self.load_image()
+            self.create_image()
         )
 
 
@@ -85,90 +79,16 @@ class Pickup(
         )
 
 
-    # =====================================================
-    # IMAGE
-    # =====================================================
-
-    def load_image(
+    def create_image(
         self
     ):
 
-        if (
-            self.pickup_type
-            == "credits"
-        ):
-
-            filename = (
-                "pickup_credit.png"
-            )
-
-
-        elif (
-            self.pickup_type
-            == "health"
-        ):
-
-            filename = (
-                "pickup_health.png"
-            )
-
-
-        elif (
-            self.pickup_type
-            == "route_item"
-        ):
-
-            filename = (
-                f"{self.route_item}.png"
-            )
-
-
-        else:
-
-            filename = (
-                "pickup_unknown.png"
-            )
-
-
-        path = (
-            ASSETS_DIR
-            / "items"
-            / filename
-        )
-
-
-        if path.exists():
-
-            image = (
-                pygame.image.load(
-                    str(path)
-                ).convert_alpha()
-            )
-
-
-            return (
-                pygame.transform.smoothscale(
-                    image,
-                    (
-                        34,
-                        34
-                    )
-                )
-            )
-
-
-        # ==================================
-        # FALLBACK
-        # ==================================
-
-        image = (
-            pygame.Surface(
-                (
-                    34,
-                    34
-                ),
-                pygame.SRCALPHA
-            )
+        image = pygame.Surface(
+            (
+                34,
+                34
+            ),
+            pygame.SRCALPHA
         )
 
 
@@ -183,6 +103,9 @@ class Pickup(
                 70
             )
 
+            text = "$"
+
+
         elif (
             self.pickup_type
             == "health"
@@ -194,13 +117,19 @@ class Pickup(
                 130
             )
 
+            text = "+"
+
+
         else:
 
+            # Navigation chip.
             color = (
-                90,
+                80,
                 220,
-                240
+                250
             )
+
+            text = "N"
 
 
         pygame.draw.circle(
@@ -215,96 +144,37 @@ class Pickup(
         )
 
 
-        if (
-            self.pickup_type
-            == "health"
-        ):
-
-            pygame.draw.line(
-                image,
-                color,
-                (
-                    17,
-                    9
-                ),
-                (
-                    17,
-                    25
-                ),
-                3
+        font = (
+            pygame.font.SysFont(
+                "couriernew",
+                17,
+                bold=True
             )
+        )
 
 
-            pygame.draw.line(
-                image,
-                color,
-                (
-                    9,
-                    17
-                ),
-                (
-                    25,
-                    17
-                ),
-                3
-            )
-
-
-        elif (
-            self.pickup_type
-            == "route_item"
-        ):
-
-            pygame.draw.polygon(
-                image,
-                color,
-                [
-                    (17, 6),
-                    (28, 17),
-                    (17, 28),
-                    (6, 17)
-                ],
-                2
-            )
-
-
-        else:
-
-            font = (
-                pygame.font.SysFont(
-                    "couriernew",
-                    18,
-                    bold=True
-                )
-            )
-
-
-            text = (
-                font.render(
-                    "$",
-                    True,
-                    color
-                )
-            )
-
-
-            image.blit(
+        rendered = (
+            font.render(
                 text,
-                text.get_rect(
-                    center=(
-                        17,
-                        17
-                    )
+                True,
+                color
+            )
+        )
+
+
+        image.blit(
+            rendered,
+            rendered.get_rect(
+                center=(
+                    17,
+                    17
                 )
             )
+        )
 
 
         return image
 
-
-    # =====================================================
-    # UPDATE
-    # =====================================================
 
     def update(
         self,
@@ -321,16 +191,21 @@ class Pickup(
 
 
         self.position.x = (
+
             self.base_x
+
             + math.sin(
                 self.time * 2
             )
+
             * self.drift
         )
 
 
         self.position.x = max(
+
             20,
+
             min(
                 SCREEN_WIDTH - 20,
                 self.position.x

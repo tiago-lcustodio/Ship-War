@@ -3,7 +3,7 @@ import pygame
 
 from settings import (
     SCREEN_WIDTH,
-    SCREEN_HEIGHT,
+    PLAY_AREA_BOTTOM,
     ENEMY_HIT_FLASH_TIME
 )
 
@@ -30,37 +30,13 @@ class Enemy(
         super().__init__()
 
 
-        self.config = config
-
-
-        self.normal_image = image
-
-
-        # Imagem clara usada ao tomar dano.
-        self.flash_image = (
-            image.copy()
-        )
-
-
-        self.flash_image.fill(
-            (
-                130,
-                130,
-                130,
-                0
-            ),
-            special_flags=
-            pygame.BLEND_RGBA_ADD
+        self.normal_image = (
+            image
         )
 
 
         self.image = (
-            self.normal_image
-        )
-
-
-        self.rect = (
-            self.image.get_rect()
+            image.copy()
         )
 
 
@@ -69,32 +45,58 @@ class Enemy(
         )
 
 
+        self.config = (
+            config
+        )
+
+
         self.hp = (
-            config["hp"]
+            config[
+                "hp"
+            ]
+        )
+
+
+        self.damage = (
+            config[
+                "damage"
+            ]
         )
 
 
         self.reward = (
-            config["reward"]
+            config[
+                "reward"
+            ]
         )
 
 
-        self.hit_flash_timer = 0
+        self.position = (
+            pygame.Vector2(
 
+                random.randint(
+                    60,
+                    SCREEN_WIDTH - 60
+                ),
 
-        self.movement_name = (
-            config["movement"]
-        )
-
-
-        self.direction = (
-            random.choice(
-                [-1, 1]
+                -60
             )
         )
 
 
-        self.speed = (
+        self.base_x = (
+            self.position.x
+        )
+
+
+        self.rect = (
+            self.image.get_rect(
+                center=self.position
+            )
+        )
+
+
+        self.vertical_speed = (
             random.uniform(
                 config[
                     "min_speed"
@@ -106,59 +108,53 @@ class Enemy(
         )
 
 
-        self.vertical_speed = (
+        self.horizontal_speed = (
             random.uniform(
-                -30,
-                30
+                80,
+                150
             )
         )
 
 
-        y = random.randint(
-            90,
-            int(
-                SCREEN_HEIGHT
-                * 0.60
+        self.horizontal_direction = (
+            random.choice(
+                [-1, 1]
             )
         )
 
 
-        if self.direction == 1:
-
-            x = (
-                -self.rect.width
-            )
-
-        else:
-
-            x = (
-                SCREEN_WIDTH
-                + self.rect.width
-            )
-
-
-        self.position = (
-            pygame.Vector2(
-                x,
-                y
-            )
-        )
-
-
-        self.rect.center = (
-            self.position
+        self.movement_time = (
+            random.random()
+            * 10
         )
 
 
         self.fire_timer = (
-            random.uniform(
-                config[
-                    "min_fire_time"
-                ],
-                config[
-                    "max_fire_time"
-                ]
-            )
+            self.get_fire_delay()
+        )
+
+
+        self.flash_timer = 0
+
+        self.stun_timer = 0
+
+
+        self.is_boss = False
+
+
+    def get_fire_delay(
+        self
+    ):
+
+        return random.uniform(
+
+            self.config[
+                "min_fire_time"
+            ],
+
+            self.config[
+                "max_fire_time"
+            ]
         )
 
 
@@ -167,56 +163,62 @@ class Enemy(
         dt
     ):
 
-        movement = (
-            MOVEMENT_PATTERNS[
-                self.movement_name
-            ]
+        if self.flash_timer > 0:
+
+            self.flash_timer -= dt
+
+
+        if self.stun_timer > 0:
+
+            self.stun_timer -= dt
+
+            return
+
+
+        self.position.y += (
+            self.vertical_speed
+            * dt
         )
 
 
-        movement(
-            self,
-            dt
+        pattern = (
+            MOVEMENT_PATTERNS.get(
+                self.config[
+                    "movement"
+                ]
+            )
         )
 
 
-        self.fire_timer -= dt
+        if pattern:
 
-
-        if (
-            self.hit_flash_timer
-            > 0
-        ):
-
-            self.hit_flash_timer -= (
+            pattern(
+                self,
                 dt
             )
 
 
-            self.image = (
-                self.flash_image
-            )
+        self.rect.center = (
 
-        else:
+            round(
+                self.position.x
+            ),
 
-            self.image = (
-                self.normal_image
+            round(
+                self.position.y
             )
+        )
+
+
+        self.fire_timer -= (
+            dt
+        )
 
 
         if (
-            self.direction == 1
-            and self.rect.left
-            > SCREEN_WIDTH
-        ):
-
-            self.kill()
-
-
-        elif (
-            self.direction == -1
-            and self.rect.right
-            < 0
+            self.rect.top
+            > PLAY_AREA_BOTTOM
+            + 70
         ):
 
             self.kill()
@@ -227,7 +229,15 @@ class Enemy(
     ):
 
         return (
-            self.fire_timer <= 0
+
+            self.stun_timer <= 0
+
+            and self.fire_timer <= 0
+
+            and self.rect.top > 0
+
+            and self.rect.bottom
+            < PLAY_AREA_BOTTOM
         )
 
 
@@ -236,14 +246,7 @@ class Enemy(
     ):
 
         self.fire_timer = (
-            random.uniform(
-                self.config[
-                    "min_fire_time"
-                ],
-                self.config[
-                    "max_fire_time"
-                ]
-            )
+            self.get_fire_delay()
         )
 
 
@@ -252,38 +255,48 @@ class Enemy(
             image=
             self.shot_image,
 
-            x=
-            self.rect.centerx,
+            center=
+            self.rect.midbottom,
 
-            y=
-            self.rect.bottom,
-
-            velocity_x=0,
-
-            velocity_y=
-            self.config[
-                "shot_speed"
-            ],
+            velocity=(
+                0,
+                self.config[
+                    "shot_speed"
+                ]
+            ),
 
             damage=
-            self.config[
-                "damage"
-            ],
+            self.damage,
 
             owner=
             "enemy"
         )
 
 
-    def take_damage(
+    def stun(
         self,
-        damage
+        duration
     ):
 
-        self.hp -= damage
+        self.stun_timer = max(
+
+            self.stun_timer,
+
+            duration
+        )
 
 
-        self.hit_flash_timer = (
+    def take_damage(
+        self,
+        amount
+    ):
+
+        self.hp -= (
+            amount
+        )
+
+
+        self.flash_timer = (
             ENEMY_HIT_FLASH_TIME
         )
 

@@ -1,38 +1,23 @@
 import base64
 import hashlib
 import secrets
-import struct
 
 from dataclasses import dataclass
 
 
-SECRET = b"SHIP_WAR_RETRO_2026_V3"
+SECRET = b"SHIP_WAR_RETRO_2026_V4"
 
 
-# =========================================================
-# HELPERS
-# =========================================================
+def level_bit(level_number):
 
-def level_bit(
-    level_number
-):
-
-    return (
-        1
-        << (
-            level_number - 1
-        )
+    return 1 << (
+        level_number - 1
     )
 
-
-# =========================================================
-# GAME PROGRESS
-# =========================================================
 
 @dataclass
 class GameProgress:
 
-    # Agora representa a localização atual no mapa.
     next_level: int = 1
 
     money: int = 0
@@ -41,140 +26,222 @@ class GameProgress:
 
     continues: int = 0
 
-    primary_weapon: int = 0
-
     flags: int = 0
-
-    ship_id: int = 0
 
     nav_core_parts: int = 0
 
-    # 14 bits possíveis.
     completed_mask: int = 0
-
-    # Level 1 conhecido desde o início.
     discovered_mask: int = 1
 
-    # 4 bits usados atualmente.
-    route_items_mask: int = 0
+    # =====================================================
+    # NAVIGATION CHIPS
+    # =====================================================
+
+    nav_chips: int = 0
 
 
     # =====================================================
-    # LEVEL COMPLETION
+    # CURRENT LOADOUT
     # =====================================================
 
-    def is_completed(
-        self,
-        level_number
-    ):
+    ship_id: int = 0
+
+    equipped_primary: int = 0
+    equipped_secondary: int = 0
+    equipped_defense: int = 0
+
+
+    # =====================================================
+    # OWNED EQUIPMENT
+    # =====================================================
+
+    # Pulse Cannon I / Classic Saucer already owned.
+    owned_primary_mask: int = 1
+    owned_secondary_mask: int = 0
+    owned_defense_mask: int = 0
+    owned_ships_mask: int = 1
+
+
+    # =====================================================
+    # COPY
+    # =====================================================
+
+    def clone(self):
+
+        return GameProgress(
+
+            next_level=self.next_level,
+
+            money=self.money,
+
+            max_hp=self.max_hp,
+
+            continues=self.continues,
+
+            flags=self.flags,
+
+            nav_core_parts=self.nav_core_parts,
+
+            completed_mask=self.completed_mask,
+
+            discovered_mask=self.discovered_mask,
+
+            nav_chips=self.nav_chips,
+
+            ship_id=self.ship_id,
+
+            equipped_primary=self.equipped_primary,
+
+            equipped_secondary=self.equipped_secondary,
+
+            equipped_defense=self.equipped_defense,
+
+            owned_primary_mask=self.owned_primary_mask,
+
+            owned_secondary_mask=self.owned_secondary_mask,
+
+            owned_defense_mask=self.owned_defense_mask,
+
+            owned_ships_mask=self.owned_ships_mask
+        )
+
+
+    # =====================================================
+    # LEVELS
+    # =====================================================
+
+    def is_completed(self, level_number):
 
         return bool(
             self.completed_mask
-            & level_bit(
-                level_number
-            )
+            & level_bit(level_number)
         )
 
 
-    def mark_completed(
-        self,
-        level_number
-    ):
+    def mark_completed(self, level_number):
 
         self.completed_mask |= (
-            level_bit(
-                level_number
-            )
+            level_bit(level_number)
         )
 
 
-    # =====================================================
-    # DISCOVERY
-    # =====================================================
-
-    def is_discovered(
-        self,
-        level_number
-    ):
+    def is_discovered(self, level_number):
 
         return bool(
             self.discovered_mask
-            & level_bit(
-                level_number
-            )
+            & level_bit(level_number)
         )
 
 
-    def discover(
-        self,
-        level_number
-    ):
+    def discover(self, level_number):
 
         self.discovered_mask |= (
-            level_bit(
-                level_number
-            )
+            level_bit(level_number)
         )
 
 
     # =====================================================
-    # ROUTE ITEMS
+    # EQUIPMENT
     # =====================================================
 
-    def has_route_item_bit(
-        self,
-        bit_number
-    ):
+    def owns_primary(self, equipment_id):
 
         return bool(
-            self.route_items_mask
-            & (
-                1 << bit_number
+            self.owned_primary_mask
+            & (1 << equipment_id)
+        )
+
+
+    def own_primary(self, equipment_id):
+
+        self.owned_primary_mask |= (
+            1 << equipment_id
+        )
+
+
+    def owns_secondary(self, equipment_id):
+
+        if equipment_id == 0:
+            return True
+
+        return bool(
+            self.owned_secondary_mask
+            & (1 << equipment_id)
+        )
+
+
+    def own_secondary(self, equipment_id):
+
+        if equipment_id > 0:
+
+            self.owned_secondary_mask |= (
+                1 << equipment_id
             )
+
+
+    def owns_defense(self, equipment_id):
+
+        if equipment_id == 0:
+            return True
+
+        return bool(
+            self.owned_defense_mask
+            & (1 << equipment_id)
         )
 
 
-    def add_route_item_bit(
-        self,
-        bit_number
-    ):
+    def own_defense(self, equipment_id):
 
-        self.route_items_mask |= (
-            1 << bit_number
+        if equipment_id > 0:
+
+            self.owned_defense_mask |= (
+                1 << equipment_id
+            )
+
+
+    def owns_ship(self, ship_id):
+
+        return bool(
+            self.owned_ships_mask
+            & (1 << ship_id)
         )
 
 
-    def consume_route_item_bit(
-        self,
-        bit_number
-    ):
+    def own_ship(self, ship_id):
 
-        self.route_items_mask &= ~(
-            1 << bit_number
+        self.owned_ships_mask |= (
+            1 << ship_id
         )
 
 
 # =========================================================
-# VERSION 3
+# PASSWORD V4
 # =========================================================
 #
-# 17 bytes payload
-# +
-# 5 bytes signature
-# =
-# 22 bytes
+# 17 byte payload
+# + 5 byte signature
+# = 22 bytes
 #
-# Base64 sem == = 30 caracteres.
+# Base64 URL-safe sem == = 30 chars.
 #
 # =========================================================
 
-def generate_password(
-    progress
-):
+def generate_password(progress):
 
-    version = 3
+    payload = bytearray()
 
 
+    # 0
+    payload.append(4)
+
+
+    # 1
+    payload.append(
+        progress.next_level & 0xFF
+    )
+
+
+    # 2..4
     money = max(
         0,
         min(
@@ -183,12 +250,67 @@ def generate_password(
         )
     )
 
+    payload.extend(
+        money.to_bytes(
+            3,
+            "big"
+        )
+    )
 
-    ship_core = (
+
+    # 5
+    payload.append(
+        progress.max_hp & 0xFF
+    )
+
+
+    # 6
+    #
+    # bits 0-1 = ship
+    # bits 2-4 = primary
+    # bits 5-7 = secondary
+
+    packed_equipment = (
+
+        (progress.ship_id & 0b11)
+
+        |
 
         (
-            progress.ship_id
-            & 0b11
+            (
+                progress.equipped_primary
+                & 0b111
+            )
+            << 2
+        )
+
+        |
+
+        (
+            (
+                progress.equipped_secondary
+                & 0b111
+            )
+            << 5
+        )
+    )
+
+    payload.append(
+        packed_equipment
+    )
+
+
+    # 7
+    #
+    # bits 0-2 = defense
+    # bits 3-4 = nav core
+    # bits 5-7 = nav chips
+
+    packed_status = (
+
+        (
+            progress.equipped_defense
+            & 0b111
         )
 
         |
@@ -198,12 +320,30 @@ def generate_password(
                 progress.nav_core_parts
                 & 0b11
             )
-            << 2
+            << 3
+        )
+
+        |
+
+        (
+            (
+                min(
+                    progress.nav_chips,
+                    7
+                )
+                & 0b111
+            )
+            << 5
         )
     )
 
+    payload.append(
+        packed_status
+    )
 
-    meta = (
+
+    # 8
+    payload.append(
 
         (
             progress.continues
@@ -222,85 +362,69 @@ def generate_password(
     )
 
 
+    # 9..10
+    payload.extend(
+        progress.completed_mask.to_bytes(
+            2,
+            "big"
+        )
+    )
+
+
+    # 11..12
+    payload.extend(
+        progress.discovered_mask.to_bytes(
+            2,
+            "big"
+        )
+    )
+
+
+    # 13
+    payload.append(
+        progress.owned_primary_mask
+        & 0xFF
+    )
+
+
+    # 14
+    payload.append(
+        progress.owned_secondary_mask
+        & 0xFF
+    )
+
+
+    # 15
+    payload.append(
+        progress.owned_defense_mask
+        & 0xFF
+    )
+
+
+    # 16
+    #
+    # low 3 bits = ships
+    # remaining bits = tiny nonce
+
     nonce = (
-        secrets.token_bytes(
-            3
-        )
+        secrets.randbits(5)
+        << 3
     )
-
-
-    payload = bytearray()
-
 
     payload.append(
-        version
-    )
 
-
-    payload.append(
-        progress.next_level
-    )
-
-
-    payload.extend(
-        money.to_bytes(
-            3,
-            "big"
-        )
-    )
-
-
-    payload.append(
-        progress.max_hp
-    )
-
-
-    payload.append(
-        progress.primary_weapon
-    )
-
-
-    payload.append(
-        ship_core
-    )
-
-
-    payload.extend(
-        progress.completed_mask
-        .to_bytes(
-            2,
-            "big"
-        )
-    )
-
-
-    payload.extend(
-        progress.discovered_mask
-        .to_bytes(
-            2,
-            "big"
-        )
-    )
-
-
-    payload.append(
-        progress.route_items_mask
-    )
-
-
-    payload.append(
-        meta
-    )
-
-
-    payload.extend(
         nonce
+
+        |
+
+        (
+            progress.owned_ships_mask
+            & 0b111
+        )
     )
 
 
-    payload = bytes(
-        payload
-    )
+    payload = bytes(payload)
 
 
     signature = (
@@ -325,13 +449,7 @@ def generate_password(
     )
 
 
-# =========================================================
-# DECODE
-# =========================================================
-
-def decode_password(
-    password
-):
+def decode_password(password):
 
     password = (
         password.strip()
@@ -374,280 +492,219 @@ def decode_password(
     version = payload[0]
 
 
-    # =====================================================
-    # VERSION 3
-    # =====================================================
+    if version != 4:
 
-    if version == 3:
+        return None
 
-        expected = (
-            hashlib.sha256(
-                SECRET + payload
-            ).digest()[:5]
+
+    expected = (
+        hashlib.sha256(
+            SECRET + payload
+        ).digest()[:5]
+    )
+
+
+    if signature != expected:
+
+        return None
+
+
+    next_level = (
+        payload[1]
+    )
+
+
+    money = int.from_bytes(
+        payload[2:5],
+        "big"
+    )
+
+
+    max_hp = (
+        payload[5]
+    )
+
+
+    equipment = (
+        payload[6]
+    )
+
+
+    ship_id = (
+        equipment
+        & 0b11
+    )
+
+
+    equipped_primary = (
+        (
+            equipment
+            >> 2
         )
+        & 0b111
+    )
 
 
-        if signature != expected:
-
-            return None
-
-
-        current_location = (
-            payload[1]
+    equipped_secondary = (
+        (
+            equipment
+            >> 5
         )
+        & 0b111
+    )
 
 
-        money = int.from_bytes(
-            payload[2:5],
+    status = (
+        payload[7]
+    )
+
+
+    equipped_defense = (
+        status
+        & 0b111
+    )
+
+
+    nav_core_parts = (
+        (
+            status
+            >> 3
+        )
+        & 0b11
+    )
+
+
+    nav_chips = (
+        (
+            status
+            >> 5
+        )
+        & 0b111
+    )
+
+
+    meta = (
+        payload[8]
+    )
+
+
+    continues = (
+        meta
+        & 0x0F
+    )
+
+
+    flags = (
+        (
+            meta
+            >> 4
+        )
+        & 0x0F
+    )
+
+
+    completed_mask = (
+        int.from_bytes(
+            payload[9:11],
             "big"
         )
+    )
 
 
-        max_hp = (
-            payload[5]
+    discovered_mask = (
+        int.from_bytes(
+            payload[11:13],
+            "big"
         )
+    )
 
 
-        primary_weapon = (
-            payload[6]
-        )
+    owned_primary_mask = (
+        payload[13]
+    )
 
 
-        ship_core = (
-            payload[7]
-        )
+    owned_secondary_mask = (
+        payload[14]
+    )
 
 
-        ship_id = (
-            ship_core
-            & 0b11
-        )
+    owned_defense_mask = (
+        payload[15]
+    )
 
 
-        nav_core_parts = (
-            (
-                ship_core
-                >> 2
-            )
-            & 0b11
-        )
+    owned_ships_mask = (
+        payload[16]
+        & 0b111
+    )
 
 
-        completed_mask = (
-            int.from_bytes(
-                payload[8:10],
-                "big"
-            )
-        )
+    if not (
+        1 <= next_level <= 14
+    ):
 
+        return None
 
-        discovered_mask = (
-            int.from_bytes(
-                payload[10:12],
-                "big"
-            )
-        )
 
+    if not (
+        3 <= max_hp <= 7
+    ):
 
-        route_items_mask = (
-            payload[12]
-        )
+        return None
 
 
-        meta = (
-            payload[13]
-        )
+    if ship_id > 2:
 
+        return None
 
-        continues = (
-            meta
-            & 0x0F
-        )
 
+    if nav_core_parts > 3:
 
-        flags = (
-            (
-                meta
-                >> 4
-            )
-            & 0x0F
-        )
+        return None
 
 
-        if not (
-            1
-            <= current_location
-            <= 14
-        ):
+    progress = GameProgress(
 
-            return None
+        next_level=next_level,
 
+        money=money,
 
-        if not (
-            0 <= ship_id <= 2
-        ):
+        max_hp=max_hp,
 
-            return None
+        continues=continues,
 
+        flags=flags,
 
-        if not (
-            0
-            <= nav_core_parts
-            <= 3
-        ):
+        nav_core_parts=nav_core_parts,
 
-            return None
+        completed_mask=completed_mask,
 
+        discovered_mask=discovered_mask,
 
-        return GameProgress(
+        nav_chips=nav_chips,
 
-            next_level=
-            current_location,
+        ship_id=ship_id,
 
-            money=
-            money,
+        equipped_primary=equipped_primary,
 
-            max_hp=
-            max_hp,
+        equipped_secondary=equipped_secondary,
 
-            continues=
-            continues,
+        equipped_defense=equipped_defense,
 
-            primary_weapon=
-            primary_weapon,
+        owned_primary_mask=owned_primary_mask,
 
-            flags=
-            flags,
+        owned_secondary_mask=owned_secondary_mask,
 
-            ship_id=
-            ship_id,
+        owned_defense_mask=owned_defense_mask,
 
-            nav_core_parts=
-            nav_core_parts,
+        owned_ships_mask=owned_ships_mask
+    )
 
-            completed_mask=
-            completed_mask,
 
-            discovered_mask=
-            discovered_mask,
+    # Proteções mínimas.
+    progress.own_primary(0)
+    progress.own_ship(0)
 
-            route_items_mask=
-            route_items_mask
-        )
 
-
-    # =====================================================
-    # VERSION 2 COMPATIBILITY
-    # =====================================================
-
-    elif version == 2:
-
-        OLD_SECRET = (
-            b"SHIP_WAR_RETRO_2026_V2"
-        )
-
-
-        expected = (
-            hashlib.sha256(
-                OLD_SECRET
-                + payload
-            ).digest()[:5]
-        )
-
-
-        if signature != expected:
-
-            return None
-
-
-        try:
-
-            (
-                _,
-                next_level,
-                money,
-                max_hp,
-                continues,
-                primary_weapon,
-                flags,
-                ship_id,
-                nav_core_parts,
-                _reserved,
-                _nonce
-
-            ) = struct.unpack(
-                ">BBIBBBBBBB4s",
-                payload
-            )
-
-        except struct.error:
-
-            return None
-
-
-        completed = 0
-
-        discovered = 0
-
-
-        for level in range(
-            1,
-            next_level + 1
-        ):
-
-            discovered |= (
-                level_bit(
-                    level
-                )
-            )
-
-
-        for level in range(
-            1,
-            next_level
-        ):
-
-            completed |= (
-                level_bit(
-                    level
-                )
-            )
-
-
-        return GameProgress(
-
-            next_level=
-            next_level,
-
-            money=
-            money,
-
-            max_hp=
-            max_hp,
-
-            continues=
-            continues,
-
-            primary_weapon=
-            primary_weapon,
-
-            flags=
-            flags,
-
-            ship_id=
-            ship_id,
-
-            nav_core_parts=
-            nav_core_parts,
-
-            completed_mask=
-            completed,
-
-            discovered_mask=
-            discovered,
-
-            route_items_mask=0
-        )
-
-
-    return None
+    return progress

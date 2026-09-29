@@ -2,14 +2,13 @@ from settings import DEFAULT_LEVEL_DURATION
 
 
 # =========================================================
-# CAMPANHA
+# CAMPAIGN
 # =========================================================
 
 MAINLINE_LEVELS = [
     1, 2, 3, 4, 5,
     6, 7, 8, 9, 10
 ]
-
 
 SECRET_LEVELS = [
     11, 12, 13, 14
@@ -30,116 +29,100 @@ NEXT_MAINLINE = {
 
 
 # =========================================================
-# MAPA DO SISTEMA SOLAR
-# =========================================================
-#
-# As coordenadas são posições na tela do mapa.
-#
-# O sprite é opcional.
-# Se não existir, aparece um círculo.
-#
+# MAP
 # =========================================================
 
 MAP_LOCATIONS = {
 
     1: {
         "name": "EARTH",
-        "sprite": "location_earth.png",
-        "position": (75, 545)
+        "position": (75, 545),
+        "sprite": None
     },
 
     2: {
         "name": "UPPER ATMOSPHERE",
-        "sprite": "location_atmosphere.png",
-        "position": (120, 490)
+        "position": (120, 490),
+        "sprite": None
     },
 
     3: {
         "name": "MOON",
-        "sprite": "location_moon.png",
-        "position": (175, 430)
+        "position": (175, 430),
+        "sprite": None
     },
 
     4: {
         "name": "LUNAR ORBIT",
-        "sprite": "location_lunar_orbit.png",
-        "position": (235, 370)
+        "position": (235, 370),
+        "sprite": None
     },
 
     5: {
         "name": "MARS",
-        "sprite": "location_mars.png",
-        "position": (305, 320)
+        "position": (305, 320),
+        "sprite": None
     },
 
     6: {
         "name": "ASTEROID BELT",
-        "sprite": "location_belt.png",
-        "position": (370, 270)
+        "position": (370, 270),
+        "sprite": None
     },
 
     7: {
         "name": "JUPITER",
-        "sprite": "location_jupiter.png",
-        "position": (435, 225)
+        "position": (435, 225),
+        "sprite": None
     },
 
     8: {
         "name": "SATURN",
-        "sprite": "location_saturn.png",
-        "position": (505, 180)
+        "position": (505, 180),
+        "sprite": None
     },
 
     9: {
         "name": "OUTER SYSTEM",
-        "sprite": "location_outer_system.png",
-        "position": (575, 130)
+        "position": (575, 130),
+        "sprite": None
     },
 
     10: {
         "name": "DEEP SPACE STATION",
-        "sprite": "location_station.png",
-        "position": (650, 80)
+        "position": (650, 80),
+        "sprite": None
     },
-
-
-    # =====================================================
-    # FASES SECRETAS
-    # =====================================================
 
     11: {
         "name": "VENUS",
-        "sprite": "location_venus.png",
-        "position": (310, 455)
+        "position": (310, 455),
+        "sprite": None
     },
 
     12: {
         "name": "URANUS",
-        "sprite": "location_uranus.png",
-        "position": (575, 250)
+        "position": (575, 250),
+        "sprite": None
     },
 
     13: {
         "name": "NEPTUNE",
-        "sprite": "location_neptune.png",
-        "position": (625, 330)
+        "position": (625, 330),
+        "sprite": None
     },
 
     14: {
         "name": "PLUTO",
-        "sprite": "location_pluto.png",
-        "position": (655, 420)
+        "position": (655, 420),
+        "sprite": None
     }
 }
 
 
-# =========================================================
-# TRAJETÓRIAS DO MAPA
-# =========================================================
-
 MAP_CONNECTIONS = [
 
-    # Linha principal.
+    # Main route.
     (1, 2),
     (2, 3),
     (3, 4),
@@ -150,16 +133,16 @@ MAP_CONNECTIONS = [
     (8, 9),
     (9, 10),
 
-    # Rotas secretas.
-    (4, 11),       # Lunar Orbit -> Venus
-    (8, 12),       # Saturn -> Uranus
-    (12, 13),      # Uranus -> Neptune
-    (13, 14)       # Neptune -> Pluto
+    # Hidden routes.
+    (4, 11),
+    (8, 12),
+    (12, 13),
+    (13, 14)
 ]
 
 
 # =========================================================
-# NAVES
+# SHIPS
 # =========================================================
 
 SHIPS = {
@@ -169,8 +152,13 @@ SHIPS = {
         "name": "CLASSIC SAUCER",
         "sprite": "player.png",
         "speed": 420,
-        "base_hp": 3,
-        "price": 0
+        "price": 0,
+
+        # Primary weapon cooldown x 0.90.
+        "primary_cooldown_modifier": 0.90,
+
+        "secondary_cooldown_modifier": 1.00,
+        "shield_recharge_modifier": 1.00
     },
 
     1: {
@@ -178,8 +166,14 @@ SHIPS = {
         "name": "INTERCEPTOR",
         "sprite": "player_02.png",
         "speed": 370,
-        "base_hp": 4,
-        "price": 30000
+        "price": 6500,
+
+        "primary_cooldown_modifier": 1.00,
+
+        # Secondary weapons recharge 15% faster.
+        "secondary_cooldown_modifier": 0.85,
+
+        "shield_recharge_modifier": 1.00
     },
 
     2: {
@@ -187,14 +181,395 @@ SHIPS = {
         "name": "HEAVY SAUCER",
         "sprite": "player_03.png",
         "speed": 310,
-        "base_hp": 6,
-        "price": 65000
+        "price": 10500,
+
+        "primary_cooldown_modifier": 1.00,
+        "secondary_cooldown_modifier": 1.00,
+
+        # Shields recharge 25% faster.
+        "shield_recharge_modifier": 0.75
     }
 }
 
 
 # =========================================================
-# INIMIGOS
+# PRIMARY WEAPONS
+# =========================================================
+#
+# max_hits:
+#     1 = normal projectile
+#     3 = can hit three different enemies
+#
+# =========================================================
+
+PRIMARY_WEAPONS = {
+
+    0: {
+        "id": 0,
+        "name": "PULSE CANNON I",
+
+        "damage": 1,
+        "cooldown": 0.20,
+        "speed": 800,
+
+        "pattern": "single",
+
+        "max_hits": 1,
+
+        "price": 0,
+
+        "special": False
+    },
+
+
+    1: {
+        "id": 1,
+        "name": "PULSE CANNON II",
+
+        "damage": 1,
+        "cooldown": 0.143,
+        "speed": 820,
+
+        "pattern": "single",
+
+        "max_hits": 1,
+
+        "price": 2200,
+
+        "special": False
+    },
+
+
+    2: {
+        "id": 2,
+        "name": "TWIN PULSE",
+
+        "damage": 1,
+        "cooldown": 0.22,
+        "speed": 800,
+
+        "pattern": "twin",
+
+        "max_hits": 1,
+
+        "price": 3800,
+
+        "special": False
+    },
+
+
+    3: {
+        "id": 3,
+        "name": "HEAVY PULSE",
+
+        "damage": 3,
+        "cooldown": 0.40,
+        "speed": 680,
+
+        "pattern": "single",
+
+        "max_hits": 1,
+
+        "price": 4500,
+
+        "special": False
+    },
+
+
+    4: {
+        "id": 4,
+        "name": "SPREAD PULSE",
+
+        "damage": 1,
+        "cooldown": 0.285,
+        "speed": 760,
+
+        "pattern": "spread",
+
+        "max_hits": 1,
+
+        "price": 5500,
+
+        "special": False
+    },
+
+
+    # =====================================================
+    # VENUS
+    # =====================================================
+
+    5: {
+        "id": 5,
+        "name": "PLASMA LANCE",
+
+        "damage": 2,
+        "cooldown": 0.32,
+        "speed": 900,
+
+        "pattern": "single",
+
+        # Perfura até 3 inimigos.
+        "max_hits": 3,
+
+        "price": 6500,
+
+        "special": True,
+
+        "origin": "VENUS"
+    },
+
+
+    # =====================================================
+    # PLUTO
+    # =====================================================
+
+    6: {
+        "id": 6,
+        "name": "ANCIENT GREY CANNON",
+
+        "damage": 4,
+        "cooldown": 0.16,
+        "speed": 900,
+
+        "pattern": "single",
+
+        "max_hits": 1,
+
+        # Após seis disparos entra em overheat.
+        "overheat_after": 6,
+        "overheat_time": 2.5,
+
+        "price": 9000,
+
+        "special": True,
+
+        "origin": "PLUTO"
+    }
+}
+
+
+# =========================================================
+# SECONDARY WEAPONS
+# =========================================================
+
+SECONDARY_WEAPONS = {
+
+    0: {
+        "id": 0,
+        "name": "NONE",
+        "kind": "none",
+        "price": 0
+    },
+
+
+    1: {
+        "id": 1,
+        "name": "MISSILE POD",
+
+        "kind": "missile",
+
+        "damage": 5,
+        "cooldown": 3.0,
+        "speed": 520,
+
+        "price": 2800,
+
+        "special": False
+    },
+
+
+    2: {
+        "id": 2,
+        "name": "PLASMA BOMB",
+
+        "kind": "plasma_bomb",
+
+        "damage": 3,
+        "cooldown": 4.0,
+        "speed": 430,
+
+        "radius": 90,
+
+        "price": 4200,
+
+        "special": False
+    },
+
+
+    3: {
+        "id": 3,
+        "name": "EMP BURST",
+
+        "kind": "emp",
+
+        "damage": 1,
+        "cooldown": 5.0,
+
+        "radius": 150,
+        "stun_time": 2.0,
+
+        "price": 5000,
+
+        "special": False
+    },
+
+
+    4: {
+        "id": 4,
+        "name": "DEFENSE BURST",
+
+        "kind": "defense_burst",
+
+        "cooldown": 7.0,
+
+        "duration": 1.2,
+
+        "price": 5500,
+
+        "special": False
+    },
+
+
+    # =====================================================
+    # NEPTUNE
+    # =====================================================
+
+    5: {
+        "id": 5,
+        "name": "CHAIN LIGHTNING",
+
+        "kind": "chain_lightning",
+
+        "damage": 3,
+        "cooldown": 5.5,
+
+        "targets": 3,
+        "radius": 300,
+
+        "price": 7000,
+
+        "special": True,
+
+        "origin": "NEPTUNE"
+    }
+}
+
+
+# =========================================================
+# DEFENSIVE MODULES
+# =========================================================
+
+DEFENSE_MODULES = {
+
+    0: {
+        "id": 0,
+        "name": "NONE",
+        "kind": "none",
+        "price": 0
+    },
+
+
+    1: {
+        "id": 1,
+        "name": "SHIELD I",
+
+        "kind": "shield",
+
+        "capacity": 1,
+        "recharge_time": 7.0,
+
+        "price": 2500,
+
+        "special": False
+    },
+
+
+    2: {
+        "id": 2,
+        "name": "SHIELD II",
+
+        "kind": "shield",
+
+        "capacity": 2,
+        "recharge_time": 8.0,
+
+        "price": 4800,
+
+        "special": False
+    },
+
+
+    3: {
+        "id": 3,
+        "name": "REACTIVE ARMOR",
+
+        "kind": "reactive",
+
+        "cooldown": 12.0,
+
+        "price": 5500,
+
+        "special": False
+    },
+
+
+    4: {
+        "id": 4,
+        "name": "EMERGENCY REPAIR",
+
+        "kind": "repair",
+
+        "price": 6500,
+
+        "special": False
+    },
+
+
+    # =====================================================
+    # URANUS
+    # =====================================================
+
+    5: {
+        "id": 5,
+        "name": "PHASE SHIELD",
+
+        "kind": "phase",
+
+        # 30% de chance de ignorar completamente
+        # qualquer impacto.
+        "phase_chance": 0.30,
+
+        "price": 7500,
+
+        "special": True,
+
+        "origin": "URANUS"
+    }
+}
+
+
+# =========================================================
+# HULL
+# =========================================================
+
+HULL_UPGRADE_PRICES = {
+
+    3: 2000,
+    4: 3200,
+    5: 4800,
+    6: 7000
+}
+
+MAX_PLAYER_HP = 7
+
+
+# =========================================================
+# ENEMIES
+# =========================================================
+#
+# As artes ainda podem usar enemy_n1.png.
+# Estamos separando comportamento/balanceamento da arte.
+#
 # =========================================================
 
 ENEMY_TYPES = {
@@ -202,7 +577,6 @@ ENEMY_TYPES = {
     "basic": {
 
         "name": "BASIC FIGHTER",
-
         "sprite": "enemy_n1.png",
 
         "width": 56,
@@ -220,176 +594,209 @@ ENEMY_TYPES = {
 
         "damage": 1,
 
-        "reward": 110,
+        # Antes era 110.
+        "reward": 11,
 
         "movement": "horizontal"
+    },
+
+
+    "fast": {
+
+        "name": "FAST INTERCEPTOR",
+        "sprite": "enemy_n1.png",
+
+        "width": 50,
+        "height": 50,
+
+        "hp": 2,
+
+        "min_speed": 160,
+        "max_speed": 220,
+
+        "min_fire_time": 1.5,
+        "max_fire_time": 2.6,
+
+        "shot_speed": 310,
+
+        "damage": 1,
+
+        "reward": 14,
+
+        "movement": "zigzag"
+    },
+
+
+    "armored": {
+
+        "name": "ARMORED FIGHTER",
+        "sprite": "enemy_n1.png",
+
+        "width": 62,
+        "height": 62,
+
+        "hp": 5,
+
+        "min_speed": 65,
+        "max_speed": 100,
+
+        "min_fire_time": 1.6,
+        "max_fire_time": 2.6,
+
+        "shot_speed": 290,
+
+        "damage": 1,
+
+        "reward": 22,
+
+        "movement": "horizontal"
+    },
+
+
+    "ace": {
+
+        "name": "ACE FIGHTER",
+        "sprite": "enemy_n1.png",
+
+        "width": 54,
+        "height": 54,
+
+        "hp": 4,
+
+        "min_speed": 130,
+        "max_speed": 180,
+
+        "min_fire_time": 1.2,
+        "max_fire_time": 2.0,
+
+        "shot_speed": 340,
+
+        "damage": 1,
+
+        "reward": 26,
+
+        "movement": "zigzag"
+    },
+
+
+    "heavy": {
+
+        "name": "HEAVY ATTACK SHIP",
+        "sprite": "enemy_n1.png",
+
+        "width": 68,
+        "height": 68,
+
+        "hp": 7,
+
+        "min_speed": 55,
+        "max_speed": 85,
+
+        "min_fire_time": 1.3,
+        "max_fire_time": 2.0,
+
+        "shot_speed": 320,
+
+        "damage": 2,
+
+        "reward": 38,
+
+        "movement": "horizontal"
+    },
+
+
+    "elite": {
+
+        "name": "ELITE FIGHTER",
+        "sprite": "enemy_n1.png",
+
+        "width": 58,
+        "height": 58,
+
+        "hp": 9,
+
+        "min_speed": 110,
+        "max_speed": 160,
+
+        "min_fire_time": 0.9,
+        "max_fire_time": 1.6,
+
+        "shot_speed": 370,
+
+        "damage": 2,
+
+        "reward": 55,
+
+        "movement": "zigzag"
     }
 }
 
 
-# =========================================================
-# BOSSES
-# =========================================================
-#
-# IMPORTANTE:
-# O boss só será criado se a fase ainda NÃO tiver sido
-# completada.
-#
-# Replays da fase não terão boss.
-#
-# =========================================================
-
-BOSS_TYPES = {
-
-    # Futuramente:
-    #
-    # "lunar_commander": {
-    #     "name": "LUNAR COMMANDER",
-    #     "sprite": "boss_lunar.png",
-    #     "width": 120,
-    #     "height": 100,
-    #     "hp": 25,
-    #     "min_speed": 50,
-    #     "max_speed": 80,
-    #     "min_fire_time": 0.8,
-    #     "max_fire_time": 1.4,
-    #     "shot_speed": 320,
-    #     "damage": 1,
-    #     "reward": 3000,
-    #     "movement": "horizontal",
-    #     "threat":
-    #         "YOU SHOULD HAVE STAYED ON EARTH."
-    # }
-}
-
-
-# =========================================================
-# ITENS DE ROTA
-# =========================================================
-#
-# Cada item ocupa 1 bit no password.
-#
-# Ele pode futuramente ser comprado, encontrado,
-# dado por NPC, etc.
-#
-# =========================================================
-
-ROUTE_ITEM_BITS = {
-
-    "venus_coordinates": 0,
-    "uranus_coordinates": 1,
-    "neptune_coordinates": 2,
-    "pluto_coordinates": 3
-}
-
-
-ROUTE_ITEM_NAMES = {
-
-    "venus_coordinates":
-        "VENUS COORDINATE CHIP",
-
-    "uranus_coordinates":
-        "URANUS COORDINATE CHIP",
-
-    "neptune_coordinates":
-        "NEPTUNE COORDINATE CHIP",
-
-    "pluto_coordinates":
-        "PLUTO COORDINATE CHIP"
-}
-
-
-# =========================================================
-# ROTAS SECRETAS
-# =========================================================
-#
-# TAB dentro da fase correspondente.
-#
-# O item é consumido.
-#
-# =========================================================
-
-SECRET_ROUTES = {
-
-    4: {
-        "target": 11,
-        "item": "venus_coordinates",
-        "message": "VENUS ROUTE DISCOVERED"
-    },
-
-    8: {
-        "target": 12,
-        "item": "uranus_coordinates",
-        "message": "URANUS ROUTE DISCOVERED"
-    },
-
-    12: {
-        "target": 13,
-        "item": "neptune_coordinates",
-        "message": "NEPTUNE ROUTE DISCOVERED"
-    },
-
-    13: {
-        "target": 14,
-        "item": "pluto_coordinates",
-        "message": "PLUTO ROUTE DISCOVERED"
-    }
-}
+BOSS_TYPES = {}
 
 
 # =========================================================
 # DROPS
 # =========================================================
 
-COMMON_DROP_CHANCE = 0.20
-
+COMMON_DROP_CHANCE = 0.15
 
 COMMON_DROPS = [
+
     {
         "type": "credits",
-        "weight": 70,
-        "value": 100
+        "weight": 75,
+
+        # Antes era 100.
+        "value": 10
     },
 
     {
         "type": "health",
-        "weight": 30,
+        "weight": 25,
         "value": 1
     }
 ]
 
 
-# Pequena chance do item de rota aparecer
-# na região onde pode ser usado.
+# Chance adicional e independente.
 #
-# Assim ele pode ser comprado OU encontrado.
+# Aproximadamente 1,5% por inimigo após a Lua.
+# É raro, mas um jogador que repete missões pode achar chips.
 
-ROUTE_DROP_BY_LEVEL = {
+NAV_CHIP_DROP_CHANCE = 0.015
+
+
+# =========================================================
+# SECRET ROUTES
+# =========================================================
+
+SECRET_ROUTES = {
 
     4: {
-        "item": "venus_coordinates",
-        "chance": 0.04
+        "target": 11,
+        "message": "VENUS ROUTE DISCOVERED"
     },
 
     8: {
-        "item": "uranus_coordinates",
-        "chance": 0.04
+        "target": 12,
+        "message": "URANUS ROUTE DISCOVERED"
     },
 
     12: {
-        "item": "neptune_coordinates",
-        "chance": 0.04
+        "target": 13,
+        "message": "NEPTUNE ROUTE DISCOVERED"
     },
 
     13: {
-        "item": "pluto_coordinates",
-        "chance": 0.04
+        "target": 14,
+        "message": "PLUTO ROUTE DISCOVERED"
     }
 }
 
 
 # =========================================================
-# MERCADORES
+# MERCHANTS
 # =========================================================
 
 MERCHANT_SPECIES = {
@@ -431,225 +838,222 @@ MERCHANT_MOODS = {
 
 
 # =========================================================
-# ITENS DE MERCADO
+# MARKET ITEMS
 # =========================================================
 
 MARKET_ITEMS = {
 
-    "hp_upgrade": {
-
-        "id": "hp_upgrade",
-
-        "name": "+1 HULL",
-
-        "type": "hp_upgrade",
-
-        "description":
-            "Increase maximum hull integrity by 1.",
-
-        "price": 8000,
-
-        "max_hp": 8
+    "hull_upgrade": {
+        "name": "HULL UPGRADE",
+        "type": "hull"
     },
 
+
+    "nav_chip": {
+        "name": "FORBIDDEN NAV CHIP",
+        "type": "nav_chip"
+    },
+
+
+    # PRIMARY ------------------------------------------------
+
+    "primary_1": {
+        "name": PRIMARY_WEAPONS[1]["name"],
+        "type": "primary",
+        "equipment_id": 1
+    },
+
+    "primary_2": {
+        "name": PRIMARY_WEAPONS[2]["name"],
+        "type": "primary",
+        "equipment_id": 2
+    },
+
+    "primary_3": {
+        "name": PRIMARY_WEAPONS[3]["name"],
+        "type": "primary",
+        "equipment_id": 3
+    },
+
+    "primary_4": {
+        "name": PRIMARY_WEAPONS[4]["name"],
+        "type": "primary",
+        "equipment_id": 4
+    },
+
+    "primary_5": {
+        "name": PRIMARY_WEAPONS[5]["name"],
+        "type": "primary",
+        "equipment_id": 5
+    },
+
+    "primary_6": {
+        "name": PRIMARY_WEAPONS[6]["name"],
+        "type": "primary",
+        "equipment_id": 6
+    },
+
+
+    # SECONDARY ----------------------------------------------
+
+    "secondary_1": {
+        "name": SECONDARY_WEAPONS[1]["name"],
+        "type": "secondary",
+        "equipment_id": 1
+    },
+
+    "secondary_2": {
+        "name": SECONDARY_WEAPONS[2]["name"],
+        "type": "secondary",
+        "equipment_id": 2
+    },
+
+    "secondary_3": {
+        "name": SECONDARY_WEAPONS[3]["name"],
+        "type": "secondary",
+        "equipment_id": 3
+    },
+
+    "secondary_4": {
+        "name": SECONDARY_WEAPONS[4]["name"],
+        "type": "secondary",
+        "equipment_id": 4
+    },
+
+    "secondary_5": {
+        "name": SECONDARY_WEAPONS[5]["name"],
+        "type": "secondary",
+        "equipment_id": 5
+    },
+
+
+    # DEFENSE ------------------------------------------------
+
+    "defense_1": {
+        "name": DEFENSE_MODULES[1]["name"],
+        "type": "defense",
+        "equipment_id": 1
+    },
+
+    "defense_2": {
+        "name": DEFENSE_MODULES[2]["name"],
+        "type": "defense",
+        "equipment_id": 2
+    },
+
+    "defense_3": {
+        "name": DEFENSE_MODULES[3]["name"],
+        "type": "defense",
+        "equipment_id": 3
+    },
+
+    "defense_4": {
+        "name": DEFENSE_MODULES[4]["name"],
+        "type": "defense",
+        "equipment_id": 4
+    },
+
+    "defense_5": {
+        "name": DEFENSE_MODULES[5]["name"],
+        "type": "defense",
+        "equipment_id": 5
+    },
+
+
+    # SHIPS --------------------------------------------------
 
     "ship_1": {
-
-        "id": "ship_1",
-
-        "name": "INTERCEPTOR",
-
+        "name": SHIPS[1]["name"],
         "type": "ship",
-
-        "description":
-            "Balanced alien combat craft.",
-
-        "price": SHIPS[1]["price"],
-
-        "ship_id": 1
+        "equipment_id": 1
     },
-
 
     "ship_2": {
-
-        "id": "ship_2",
-
-        "name": "HEAVY SAUCER",
-
+        "name": SHIPS[2]["name"],
         "type": "ship",
-
-        "description":
-            "Heavy armor. Lower agility.",
-
-        "price": SHIPS[2]["price"],
-
-        "ship_id": 2
-    },
-
-
-    # =====================================================
-    # CHIPS DE ROTA
-    # =====================================================
-
-    "route_venus": {
-
-        "id": "route_venus",
-
-        "name":
-            "VENUS COORDINATE CHIP",
-
-        "type": "route_item",
-
-        "route_item":
-            "venus_coordinates",
-
-        "description":
-            "Contains an unregistered route to Venus.",
-
-        "price": 5500
-    },
-
-
-    "route_uranus": {
-
-        "id": "route_uranus",
-
-        "name":
-            "URANUS COORDINATE CHIP",
-
-        "type": "route_item",
-
-        "route_item":
-            "uranus_coordinates",
-
-        "description":
-            "A strange route beyond Saturn.",
-
-        "price": 9000
-    },
-
-
-    "route_neptune": {
-
-        "id": "route_neptune",
-
-        "name":
-            "NEPTUNE COORDINATE CHIP",
-
-        "type": "route_item",
-
-        "route_item":
-            "neptune_coordinates",
-
-        "description":
-            "Coordinates buried in alien telemetry.",
-
-        "price": 12000
-    },
-
-
-    "route_pluto": {
-
-        "id": "route_pluto",
-
-        "name":
-            "PLUTO COORDINATE CHIP",
-
-        "type": "route_item",
-
-        "route_item":
-            "pluto_coordinates",
-
-        "description":
-            "A route to the edge of the old system.",
-
-        "price": 16000
+        "equipment_id": 2
     }
 }
 
 
 # =========================================================
-# ITENS ESPECIAIS
-# =========================================================
-#
-# Vamos preencher esta lista depois.
-#
-# Os mercados secretos já estão preparados para sortear
-# até 3 itens daqui.
-#
-# =========================================================
-
-SPECIAL_MARKET_POOL = []
-
-
-# =========================================================
 # TRADING POSTS
-# =========================================================
-#
-# "location" indica onde ele aparece no mapa.
-#
-# Os mercados secretos têm 3 slots reservados
-# para itens especiais.
-#
 # =========================================================
 
 TRADING_POSTS = {
 
     "lunar_exchange": {
 
-        "name":
-            "TRANQUILITY EXCHANGE",
+        "name": "TRANQUILITY EXCHANGE",
 
         "location": 4,
 
         "stock": [
-            "hp_upgrade",
-            "route_venus"
-        ]
+            "hull_upgrade",
+            "primary_1",
+            "defense_1",
+            "nav_chip"
+        ],
+
+        "nav_chip_price": 2500
     },
 
 
     "ceres_market": {
 
-        "name":
-            "CERES SCRAP MARKET",
+        "name": "CERES SCRAP MARKET",
 
         "location": 6,
 
         "stock": [
-            "hp_upgrade",
-            "ship_1"
-        ]
+            "hull_upgrade",
+            "primary_2",
+            "secondary_1",
+            "secondary_2",
+            "ship_1",
+            "nav_chip"
+        ],
+
+        "nav_chip_price": 3500
     },
 
 
     "ringward_bazaar": {
 
-        "name":
-            "RINGWARD BAZAAR",
+        "name": "RINGWARD BAZAAR",
 
         "location": 8,
 
         "stock": [
-            "hp_upgrade",
+            "hull_upgrade",
+            "primary_3",
+            "secondary_3",
+            "defense_2",
             "ship_1",
-            "route_uranus"
-        ]
+            "nav_chip"
+        ],
+
+        "nav_chip_price": 5000
     },
 
 
     "outer_depot": {
 
-        "name":
-            "OUTER REACH DEPOT",
+        "name": "OUTER REACH DEPOT",
 
         "location": 9,
 
         "stock": [
-            "hp_upgrade",
-            "ship_1",
-            "ship_2"
-        ]
+            "hull_upgrade",
+            "primary_4",
+            "secondary_4",
+            "defense_3",
+            "defense_4",
+            "ship_2",
+            "nav_chip"
+        ],
+
+        "nav_chip_price": 6500
     },
 
 
@@ -659,57 +1063,63 @@ TRADING_POSTS = {
 
     "venus_market": {
 
-        "name":
-            "VENUS CLOUD EXCHANGE",
+        "name": "VENUS CLOUD EXCHANGE",
 
         "location": 11,
 
-        "stock": [],
+        # Só UM equipamento especial.
+        "stock": [
+            "primary_5",
+            "hull_upgrade",
+            "nav_chip"
+        ],
 
-        "special_slots": 3
+        "nav_chip_price": 4500
     },
 
 
     "uranus_market": {
 
-        "name":
-            "URANUS BLUE MARKET",
+        "name": "URANUS BLUE MARKET",
 
         "location": 12,
 
         "stock": [
-            "route_neptune"
+            "defense_5",
+            "hull_upgrade",
+            "nav_chip"
         ],
 
-        "special_slots": 3
+        "nav_chip_price": 5000
     },
 
 
     "neptune_market": {
 
-        "name":
-            "NEPTUNE DEEP BAZAAR",
+        "name": "NEPTUNE DEEP BAZAAR",
 
         "location": 13,
 
         "stock": [
-            "route_pluto"
+            "secondary_5",
+            "hull_upgrade",
+            "nav_chip"
         ],
 
-        "special_slots": 3
+        "nav_chip_price": 5500
     },
 
 
     "pluto_market": {
 
-        "name":
-            "PLUTO LAST OUTPOST",
+        "name": "PLUTO LAST OUTPOST",
 
         "location": 14,
 
-        "stock": [],
-
-        "special_slots": 3
+        "stock": [
+            "primary_6",
+            "hull_upgrade"
+        ]
     }
 }
 
@@ -724,42 +1134,28 @@ LEVELS = {
         "number": 1,
         "name": "EARTH",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_01.png",
-
-        "background_mode":
-            "scroll",
-
+        "background": "background_01.png",
+        "background_mode": "scroll",
         "background_speed": 100,
 
         "max_enemies": 3,
-
-        "enemy_types": [
-            "basic"
-        ],
+        "enemy_types": ["basic"],
 
         "environment": None,
         "boss": None,
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "ESCAPE",
+        "briefing_title": "ESCAPE",
 
         "briefing": [
-
             "Nihl has spent decades",
             "stranded on this world.",
-
             "",
-
             "His Navigation Core is broken.",
-
             "",
-
             "Now the humans have found him.",
             "It is time to leave."
         ]
@@ -770,21 +1166,17 @@ LEVELS = {
         "number": 2,
         "name": "UPPER ATMOSPHERE",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_02.png",
-
-        "background_mode":
-            "scroll",
-
+        "background": "background_02.png",
+        "background_mode": "scroll",
         "background_speed": 100,
 
         "max_enemies": 3,
 
         "enemy_types": [
-            "basic"
+            "basic",
+            "fast"
         ],
 
         "environment": None,
@@ -792,20 +1184,14 @@ LEVELS = {
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "THE SECRET SKY",
+        "briefing_title": "THE SECRET SKY",
 
         "briefing": [
-
             "These are not ordinary fighters.",
-
             "",
-
             "Humanity has been hiding",
             "more than Nihl expected.",
-
             "",
-
             "Keep climbing."
         ]
     },
@@ -815,21 +1201,17 @@ LEVELS = {
         "number": 3,
         "name": "THE MOON",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_03.png",
-
-        "background_mode":
-            "scroll",
-
+        "background": "background_03.png",
+        "background_mode": "scroll",
         "background_speed": 90,
 
         "max_enemies": 3,
 
         "enemy_types": [
-            "basic"
+            "basic",
+            "fast"
         ],
 
         "environment": None,
@@ -837,21 +1219,15 @@ LEVELS = {
 
         "nav_core_piece": 1,
 
-        "briefing_title":
-            "A FAMILIAR SIGNAL",
+        "briefing_title": "A FAMILIAR SIGNAL",
 
         "briefing": [
-
             "A Grey signal is coming",
             "from the lunar surface.",
-
             "",
-
             "It matches part of Nihl's",
             "damaged Navigation Core.",
-
             "",
-
             "Someone brought it here."
         ]
     },
@@ -861,21 +1237,17 @@ LEVELS = {
         "number": 4,
         "name": "LUNAR ORBIT",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_04.png",
-
-        "background_mode":
-            "slow_scroll",
-
+        "background": "background_04.png",
+        "background_mode": "slow_scroll",
         "background_speed": 4,
 
         "max_enemies": 3,
 
         "enemy_types": [
-            "basic"
+            "fast",
+            "armored"
         ],
 
         "environment": None,
@@ -883,20 +1255,14 @@ LEVELS = {
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "THE OTHER HUMANITY",
+        "briefing_title": "THE OTHER HUMANITY",
 
         "briefing": [
-
             "Stations surround the Moon.",
-
             "",
-
             "Humanity reached space",
             "long before Earth was told.",
-
             "",
-
             "Nihl is no longer alone up here."
         ]
     },
@@ -906,21 +1272,18 @@ LEVELS = {
         "number": 5,
         "name": "MARS",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_05.png",
-
-        "background_mode":
-            "scroll",
-
+        "background": "background_05.png",
+        "background_mode": "scroll",
         "background_speed": 95,
 
-        "max_enemies": 3,
+        "max_enemies": 4,
 
         "enemy_types": [
-            "basic"
+            "fast",
+            "armored",
+            "ace"
         ],
 
         "environment": None,
@@ -928,20 +1291,14 @@ LEVELS = {
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "THE RED FRONTIER",
+        "briefing_title": "THE RED FRONTIER",
 
         "briefing": [
-
             "Mars is no empty world.",
-
             "",
-
             "Humans, aliens and mercenaries",
             "trade beneath Earth's silence.",
-
             "",
-
             "Nihl needs a way through."
         ]
     },
@@ -951,21 +1308,17 @@ LEVELS = {
         "number": 6,
         "name": "ASTEROID BELT",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_06.png",
-
-        "background_mode":
-            "scroll",
-
+        "background": "background_06.png",
+        "background_mode": "scroll",
         "background_speed": 80,
 
-        "max_enemies": 3,
+        "max_enemies": 4,
 
         "enemy_types": [
-            "basic"
+            "armored",
+            "ace"
         ],
 
         "environment": None,
@@ -973,20 +1326,14 @@ LEVELS = {
 
         "nav_core_piece": 2,
 
-        "briefing_title":
-            "SECOND SIGNAL",
+        "briefing_title": "SECOND SIGNAL",
 
         "briefing": [
-
             "The Core speaks again.",
-
             "",
-
             "Its second fragment is somewhere",
             "inside pirate territory.",
-
             "",
-
             "Nothing out here is free."
         ]
     },
@@ -996,21 +1343,17 @@ LEVELS = {
         "number": 7,
         "name": "JUPITER",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_07.png",
-
-        "background_mode":
-            "static",
-
+        "background": "background_07.png",
+        "background_mode": "static",
         "background_speed": 0,
 
-        "max_enemies": 3,
+        "max_enemies": 4,
 
         "enemy_types": [
-            "basic"
+            "armored",
+            "heavy"
         ],
 
         "environment": None,
@@ -1018,19 +1361,13 @@ LEVELS = {
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "THE GIANT",
+        "briefing_title": "THE GIANT",
 
         "briefing": [
-
             "The inner worlds are behind him.",
-
             "",
-
             "Jupiter blocks the route outward.",
-
             "",
-
             "Its storms have destroyed",
             "ships far larger than Nihl's."
         ]
@@ -1041,21 +1378,17 @@ LEVELS = {
         "number": 8,
         "name": "SATURN",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_08.png",
-
-        "background_mode":
-            "static",
-
+        "background": "background_08.png",
+        "background_mode": "static",
         "background_speed": 0,
 
-        "max_enemies": 3,
+        "max_enemies": 4,
 
         "enemy_types": [
-            "basic"
+            "ace",
+            "heavy"
         ],
 
         "environment": None,
@@ -1063,21 +1396,15 @@ LEVELS = {
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "THE RINGS",
+        "briefing_title": "THE RINGS",
 
         "briefing": [
-
             "Saturn marks the edge",
             "of the crowded routes.",
-
             "",
-
             "Beyond the rings, old maps",
             "become unreliable.",
-
             "",
-
             "Nihl keeps going."
         ]
     },
@@ -1087,21 +1414,17 @@ LEVELS = {
         "number": 9,
         "name": "OUTER SYSTEM",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_09.png",
-
-        "background_mode":
-            "slow_scroll",
-
+        "background": "background_09.png",
+        "background_mode": "slow_scroll",
         "background_speed": 3,
 
-        "max_enemies": 3,
+        "max_enemies": 4,
 
         "enemy_types": [
-            "basic"
+            "heavy",
+            "elite"
         ],
 
         "environment": None,
@@ -1109,20 +1432,14 @@ LEVELS = {
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "THE LAST SIGNAL",
+        "briefing_title": "THE LAST SIGNAL",
 
         "briefing": [
-
             "The Sun is becoming distant.",
-
             "",
-
             "But the final Core fragment",
             "is finally clear.",
-
             "",
-
             "It is transmitting from a station",
             "at the edge of known traffic."
         ]
@@ -1133,21 +1450,17 @@ LEVELS = {
         "number": 10,
         "name": "DEEP SPACE STATION",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_10.png",
-
-        "background_mode":
-            "static",
-
+        "background": "background_10.png",
+        "background_mode": "static",
         "background_speed": 0,
 
-        "max_enemies": 3,
+        "max_enemies": 4,
 
         "enemy_types": [
-            "basic"
+            "heavy",
+            "elite"
         ],
 
         "environment": None,
@@ -1155,48 +1468,39 @@ LEVELS = {
 
         "nav_core_piece": 3,
 
-        "briefing_title":
-            "THE WAY HOME",
+        "briefing_title": "THE WAY HOME",
 
         "briefing": [
-
             "The final fragment is here.",
-
             "",
-
             "Once the Core is restored,",
             "Nihl can leave this star.",
-
             "",
-
             "If that is still what he wants."
         ]
     },
 
 
     # =====================================================
-    # VENUS
+    # SECRET LEVELS
     # =====================================================
 
     11: {
         "number": 11,
         "name": "VENUS",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_venus.png",
-
-        "background_mode":
-            "scroll",
-
+        "background": "background_venus.png",
+        "background_mode": "scroll",
         "background_speed": 80,
 
-        "max_enemies": 3,
+        "max_enemies": 4,
 
         "enemy_types": [
-            "basic"
+            "fast",
+            "armored",
+            "ace"
         ],
 
         "environment": None,
@@ -1204,50 +1508,35 @@ LEVELS = {
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "BENEATH THE CLOUDS",
+        "briefing_title": "BENEATH THE CLOUDS",
 
         "briefing": [
-
             "The illegal coordinates were real.",
-
             "",
-
             "Something is broadcasting",
             "from beneath Venusian clouds.",
-
             "",
-
             "Nihl has no reason to investigate.",
-
             "So naturally, he does."
         ]
     },
 
 
-    # =====================================================
-    # URANUS
-    # =====================================================
-
     12: {
         "number": 12,
         "name": "URANUS",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_uranus.png",
-
-        "background_mode":
-            "static",
-
+        "background": "background_uranus.png",
+        "background_mode": "static",
         "background_speed": 0,
 
-        "max_enemies": 3,
+        "max_enemies": 4,
 
         "enemy_types": [
-            "basic"
+            "armored",
+            "heavy"
         ],
 
         "environment": None,
@@ -1255,50 +1544,35 @@ LEVELS = {
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "THE BLUE SILENCE",
+        "briefing_title": "THE BLUE SILENCE",
 
         "briefing": [
-
             "Few ships travel this far.",
-
             "",
-
             "A lonely trading signal",
             "calls from the darkness.",
-
             "",
-
             "Maybe treasure.",
-
             "Maybe trouble."
         ]
     },
 
 
-    # =====================================================
-    # NEPTUNE
-    # =====================================================
-
     13: {
         "number": 13,
         "name": "NEPTUNE",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_neptune.png",
-
-        "background_mode":
-            "static",
-
+        "background": "background_neptune.png",
+        "background_mode": "static",
         "background_speed": 0,
 
-        "max_enemies": 3,
+        "max_enemies": 4,
 
         "enemy_types": [
-            "basic"
+            "heavy",
+            "elite"
         ],
 
         "environment": None,
@@ -1306,49 +1580,35 @@ LEVELS = {
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "THE DEEP ROUTE",
+        "briefing_title": "THE DEEP ROUTE",
 
         "briefing": [
-
-            "The Uranian coordinates",
-            "lead farther outward.",
-
+            "The Uranian route",
+            "leads farther outward.",
             "",
-
             "An ancient relay still transmits",
             "near Neptune.",
-
             "",
-
             "Someone wants it forgotten."
         ]
     },
 
 
-    # =====================================================
-    # PLUTO
-    # =====================================================
-
     14: {
         "number": 14,
         "name": "PLUTO",
 
-        "duration":
-            DEFAULT_LEVEL_DURATION,
+        "duration": DEFAULT_LEVEL_DURATION,
 
-        "background":
-            "background_pluto.png",
-
-        "background_mode":
-            "slow_scroll",
-
+        "background": "background_pluto.png",
+        "background_mode": "slow_scroll",
         "background_speed": 2,
 
-        "max_enemies": 3,
+        "max_enemies": 4,
 
         "enemy_types": [
-            "basic"
+            "elite",
+            "heavy"
         ],
 
         "environment": None,
@@ -1356,20 +1616,14 @@ LEVELS = {
 
         "nav_core_piece": None,
 
-        "briefing_title":
-            "THE OLD EDGE",
+        "briefing_title": "THE OLD EDGE",
 
         "briefing": [
-
-            "Beyond Neptune lies an old route", 
+            "Beyond Neptune lies an old route",
             "almost erased from every chart.",
-
             "",
-
             "There is nothing Nihl needs here.",
-
             "",
-
             "That has never stopped him before."
         ]
     }

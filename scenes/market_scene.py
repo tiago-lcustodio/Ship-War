@@ -8,12 +8,15 @@ from settings import (
 
 from game_data import (
     MARKET_ITEMS,
-    SPECIAL_MARKET_POOL,
     TRADING_POSTS,
-    SHIPS,
     MERCHANT_SPECIES,
     MERCHANT_MOODS,
-    ROUTE_ITEM_BITS
+    PRIMARY_WEAPONS,
+    SECONDARY_WEAPONS,
+    DEFENSE_MODULES,
+    SHIPS,
+    HULL_UPGRADE_PRICES,
+    MAX_PLAYER_HP
 )
 
 
@@ -39,65 +42,23 @@ class MarketScene:
         )
 
 
-        # ==================================
-        # STOCK
-        # ==================================
-
         self.item_ids = list(
-            self.post.get(
-                "stock",
-                []
-            )
-        )
-
-
-        special_slots = (
-            self.post.get(
-                "special_slots",
-                0
-            )
-        )
-
-
-        if (
-            special_slots > 0
-            and SPECIAL_MARKET_POOL
-        ):
-
-            available = [
-
-                item
-
-                for item in
-                SPECIAL_MARKET_POOL
-
-                if item
-                not in self.item_ids
+            self.post[
+                "stock"
             ]
+        )
 
 
-            amount = min(
-                special_slots,
-                len(
-                    available
-                )
-            )
+        self.selected = 0
 
-
-            self.item_ids.extend(
-
-                random.sample(
-                    available,
-                    amount
-                )
-            )
+        self.message = ""
 
 
         # ==================================
         # MERCHANT
         # ==================================
 
-        self.merchant_species_id = (
+        species_id = (
             random.choice(
                 list(
                     MERCHANT_SPECIES.keys()
@@ -106,7 +67,7 @@ class MarketScene:
         )
 
 
-        self.merchant_mood_id = (
+        mood_id = (
             random.choice(
                 list(
                     MERCHANT_MOODS.keys()
@@ -115,62 +76,69 @@ class MarketScene:
         )
 
 
-        self.merchant_species = (
+        self.species = (
             MERCHANT_SPECIES[
-                self.merchant_species_id
+                species_id
             ]
         )
 
 
-        self.merchant_mood = (
+        self.mood = (
             MERCHANT_MOODS[
-                self.merchant_mood_id
+                mood_id
             ]
         )
 
 
         self.price_modifier = (
-            self.merchant_mood[
+            self.mood[
                 "price_modifier"
             ]
         )
 
 
-        # ==================================
-        # PORTRAIT
-        # ==================================
-
         filename = (
 
-            self.merchant_species[
+            self.species[
                 "portrait_prefix"
             ]
 
             + "_"
 
-            + self.merchant_mood_id
+            + mood_id
 
             + ".png"
         )
 
 
-        path = (
+        portrait_path = (
             ASSETS_DIR
             / "portraits"
             / filename
         )
 
 
-        if path.exists():
+        self.portrait = pygame.Surface(
+            (
+                110,
+                140
+            ),
+            pygame.SRCALPHA
+        )
+
+
+        if portrait_path.exists():
 
             image = (
                 pygame.image.load(
-                    str(path)
+                    str(
+                        portrait_path
+                    )
                 ).convert_alpha()
             )
 
 
-            self.merchant_portrait = (
+            self.portrait = (
                 pygame.transform.smoothscale(
                     image,
                     (
@@ -182,45 +150,22 @@ class MarketScene:
 
         else:
 
-            self.merchant_portrait = (
-                pygame.Surface(
-                    (
-                        110,
-                        140
-                    ),
-                    pygame.SRCALPHA
-                )
-            )
-
-
             pygame.draw.rect(
-                self.merchant_portrait,
+                self.portrait,
                 (
-                    60,
-                    85,
-                    75
+                    55,
+                    80,
+                    70
                 ),
-                (
-                    0,
-                    0,
-                    110,
-                    140
-                ),
+                self.portrait.get_rect(),
                 border_radius=8
             )
-
-
-        self.selected = 0
-
-        self.message = ""
-
-        self.purchase_done = False
 
 
         self.title_font = (
             pygame.font.SysFont(
                 "couriernew",
-                38,
+                35,
                 bold=True
             )
         )
@@ -229,7 +174,7 @@ class MarketScene:
         self.font = (
             pygame.font.SysFont(
                 "couriernew",
-                19,
+                18,
                 bold=True
             )
         )
@@ -238,7 +183,7 @@ class MarketScene:
         self.small_font = (
             pygame.font.SysFont(
                 "couriernew",
-                14,
+                13,
                 bold=True
             )
         )
@@ -248,39 +193,225 @@ class MarketScene:
     # PRICE
     # =====================================================
 
+    def base_price(
+        self,
+        item_id
+    ):
+
+        progress = (
+            self.game.progress
+        )
+
+
+        item = (
+            MARKET_ITEMS[
+                item_id
+            ]
+        )
+
+
+        item_type = (
+            item[
+                "type"
+            ]
+        )
+
+
+        if item_type == "hull":
+
+            if (
+                progress.max_hp
+                >= MAX_PLAYER_HP
+            ):
+
+                return None
+
+
+            return (
+                HULL_UPGRADE_PRICES[
+                    progress.max_hp
+                ]
+            )
+
+
+        if item_type == "nav_chip":
+
+            return (
+                self.post[
+                    "nav_chip_price"
+                ]
+            )
+
+
+        equipment_id = (
+            item[
+                "equipment_id"
+            ]
+        )
+
+
+        if item_type == "primary":
+
+            return (
+                PRIMARY_WEAPONS[
+                    equipment_id
+                ][
+                    "price"
+                ]
+            )
+
+
+        if item_type == "secondary":
+
+            return (
+                SECONDARY_WEAPONS[
+                    equipment_id
+                ][
+                    "price"
+                ]
+            )
+
+
+        if item_type == "defense":
+
+            return (
+                DEFENSE_MODULES[
+                    equipment_id
+                ][
+                    "price"
+                ]
+            )
+
+
+        if item_type == "ship":
+
+            return (
+                SHIPS[
+                    equipment_id
+                ][
+                    "price"
+                ]
+            )
+
+
+        return None
+
+
     def get_price(
         self,
-        item
+        item_id
     ):
 
         price = (
-            item["price"]
+            self.base_price(
+                item_id
+            )
+        )
+
+
+        if price is None:
+
+            return None
+
+
+        modified = (
+            price
             * self.price_modifier
         )
 
 
         return int(
             round(
-                price / 10
+                modified / 10
             )
             * 10
         )
 
 
-    def get_selected_item(
-        self
+    # =====================================================
+    # OWNED?
+    # =====================================================
+
+    def is_owned(
+        self,
+        item_id
     ):
 
-        if not self.item_ids:
-
-            return None
-
-
-        return MARKET_ITEMS[
-            self.item_ids[
-                self.selected
+        item = (
+            MARKET_ITEMS[
+                item_id
             ]
-        ]
+        )
+
+
+        progress = (
+            self.game.progress
+        )
+
+
+        item_type = (
+            item[
+                "type"
+            ]
+        )
+
+
+        if item_type in (
+            "hull",
+            "nav_chip"
+        ):
+
+            return False
+
+
+        equipment_id = (
+            item[
+                "equipment_id"
+            ]
+        )
+
+
+        if item_type == "primary":
+
+            return (
+                progress
+                .owns_primary(
+                    equipment_id
+                )
+            )
+
+
+        if item_type == "secondary":
+
+            return (
+                progress
+                .owns_secondary(
+                    equipment_id
+                )
+            )
+
+
+        if item_type == "defense":
+
+            return (
+                progress
+                .owns_defense(
+                    equipment_id
+                )
+            )
+
+
+        if item_type == "ship":
+
+            return (
+                progress
+                .owns_ship(
+                    equipment_id
+                )
+            )
+
+
+        return False
 
 
     # =====================================================
@@ -291,23 +422,23 @@ class MarketScene:
         self
     ):
 
-        if self.purchase_done:
-
-            self.message = (
-                "ONLY ONE PURCHASE ALLOWED"
-            )
+        if not self.item_ids:
 
             return
 
 
-        item = (
-            self.get_selected_item()
+        item_id = (
+            self.item_ids[
+                self.selected
+            ]
         )
 
 
-        if item is None:
-
-            return
+        item = (
+            MARKET_ITEMS[
+                item_id
+            ]
+        )
 
 
         progress = (
@@ -315,11 +446,31 @@ class MarketScene:
         )
 
 
+        if self.is_owned(
+            item_id
+        ):
+
+            self.message = (
+                "ALREADY OWNED"
+            )
+
+            return
+
+
         price = (
             self.get_price(
-                item
+                item_id
             )
         )
+
+
+        if price is None:
+
+            self.message = (
+                "MAXIMUM REACHED"
+            )
+
+            return
 
 
         if (
@@ -334,34 +485,140 @@ class MarketScene:
             return
 
 
+        progress.money -= (
+            price
+        )
+
+
+        item_type = (
+            item[
+                "type"
+            ]
+        )
+
+
         # ==================================
-        # HP
+        # HULL
         # ==================================
 
-        if (
-            item["type"]
-            == "hp_upgrade"
-        ):
+        if item_type == "hull":
+
+            progress.max_hp += 1
+
+            self.message = (
+                "MAX HULL INCREASED"
+            )
+
+
+        # ==================================
+        # NAV CHIP
+        # ==================================
+
+        elif item_type == "nav_chip":
 
             if (
-                progress.max_hp
-                >= item["max_hp"]
+                progress.nav_chips >= 7
             ):
 
+                progress.money += (
+                    price
+                )
+
                 self.message = (
-                    "HULL ALREADY MAXIMUM"
+                    "CHIP STORAGE FULL"
                 )
 
                 return
 
 
-            progress.money -= price
+            progress.nav_chips += 1
 
-            progress.max_hp += 1
+            self.message = (
+                "NAV CHIP ACQUIRED"
+            )
+
+
+        # ==================================
+        # PRIMARY
+        # ==================================
+
+        elif item_type == "primary":
+
+            equipment_id = (
+                item[
+                    "equipment_id"
+                ]
+            )
+
+
+            progress.own_primary(
+                equipment_id
+            )
+
+
+            progress.equipped_primary = (
+                equipment_id
+            )
 
 
             self.message = (
-                "HULL UPGRADED"
+                "PRIMARY ACQUIRED + EQUIPPED"
+            )
+
+
+        # ==================================
+        # SECONDARY
+        # ==================================
+
+        elif item_type == "secondary":
+
+            equipment_id = (
+                item[
+                    "equipment_id"
+                ]
+            )
+
+
+            progress.own_secondary(
+                equipment_id
+            )
+
+
+            progress.equipped_secondary = (
+                equipment_id
+            )
+
+
+            self.message = (
+                "SECONDARY ACQUIRED + EQUIPPED"
+            )
+
+
+        # ==================================
+        # DEFENSE
+        # ==================================
+
+        elif item_type == "defense":
+
+            equipment_id = (
+                item[
+                    "equipment_id"
+                ]
+            )
+
+
+            progress.own_defense(
+                equipment_id
+            )
+
+
+            progress.equipped_defense = (
+                equipment_id
+            )
+
+
+            self.message = (
+                "MODULE ACQUIRED + EQUIPPED"
             )
 
 
@@ -369,114 +626,28 @@ class MarketScene:
         # SHIP
         # ==================================
 
-        elif (
-            item["type"]
-            == "ship"
-        ):
+        elif item_type == "ship":
 
-            new_ship_id = (
-                item["ship_id"]
+            equipment_id = (
+                item[
+                    "equipment_id"
+                ]
             )
 
 
-            if (
-                progress.ship_id
-                == new_ship_id
-            ):
+            progress.own_ship(
+                equipment_id
+            )
 
-                self.message = (
-                    "ALREADY EQUIPPED"
-                )
-
-                return
-
-
-            progress.money -= price
 
             progress.ship_id = (
-                new_ship_id
-            )
-
-
-            progress.max_hp = max(
-
-                progress.max_hp,
-
-                SHIPS[
-                    new_ship_id
-                ][
-                    "base_hp"
-                ]
+                equipment_id
             )
 
 
             self.message = (
-                "SHIP PURCHASED"
+                "SHIP ACQUIRED + EQUIPPED"
             )
-
-
-        # ==================================
-        # ROUTE ITEM
-        # ==================================
-
-        elif (
-            item["type"]
-            == "route_item"
-        ):
-
-            route_item = (
-                item[
-                    "route_item"
-                ]
-            )
-
-
-            bit = (
-                ROUTE_ITEM_BITS[
-                    route_item
-                ]
-            )
-
-
-            if (
-                progress
-                .has_route_item_bit(
-                    bit
-                )
-            ):
-
-                self.message = (
-                    "ALREADY IN INVENTORY"
-                )
-
-                return
-
-
-            progress.money -= price
-
-
-            progress.add_route_item_bit(
-                bit
-            )
-
-
-            self.message = (
-                "NAVIGATION ITEM ACQUIRED"
-            )
-
-
-        else:
-
-            self.message = (
-                "ITEM NOT IMPLEMENTED"
-            )
-
-            return
-
-
-        self.purchase_done = (
-            True
-        )
 
 
     # =====================================================
@@ -496,12 +667,22 @@ class MarketScene:
             return
 
 
-        if event.key in (
-            pygame.K_ESCAPE,
-            pygame.K_RETURN
+        if (
+            event.key
+            == pygame.K_ESCAPE
         ):
 
             self.game.show_map()
+
+            return
+
+
+        if (
+            event.key
+            == pygame.K_l
+        ):
+
+            self.game.show_loadout()
 
             return
 
@@ -517,7 +698,9 @@ class MarketScene:
         ):
 
             self.selected = (
+
                 self.selected - 1
+
             ) % len(
                 self.item_ids
             )
@@ -529,15 +712,17 @@ class MarketScene:
         ):
 
             self.selected = (
+
                 self.selected + 1
+
             ) % len(
                 self.item_ids
             )
 
 
-        elif (
-            event.key
-            == pygame.K_b
+        elif event.key in (
+            pygame.K_RETURN,
+            pygame.K_b
         ):
 
             self.buy_selected()
@@ -589,14 +774,14 @@ class MarketScene:
             title.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    45
+                    40
                 )
             )
         )
 
 
         screen.blit(
-            self.merchant_portrait,
+            self.portrait,
             (
                 18,
                 90
@@ -606,7 +791,7 @@ class MarketScene:
 
         species = (
             self.small_font.render(
-                self.merchant_species[
+                self.species[
                     "name"
                 ],
                 True,
@@ -623,7 +808,7 @@ class MarketScene:
             species,
             (
                 20,
-                238
+                240
             )
         )
 
@@ -632,7 +817,7 @@ class MarketScene:
             self.small_font.render(
                 (
                     "MOOD: "
-                    + self.merchant_mood[
+                    + self.mood[
                         "name"
                     ]
                 ),
@@ -650,21 +835,16 @@ class MarketScene:
             mood,
             (
                 20,
-                260
+                262
             )
-        )
-
-
-        progress = (
-            self.game.progress
         )
 
 
         credits = (
             self.font.render(
                 (
-                    "CREDITS: $ "
-                    f"{progress.money}"
+                    "CREDITS: "
+                    f"{self.game.progress.money}"
                 ),
                 True,
                 (
@@ -678,188 +858,147 @@ class MarketScene:
 
         screen.blit(
             credits,
-            credits.get_rect(
-                center=(
-                    430,
-                    95
-                )
+            (
+                185,
+                90
             )
         )
 
 
-        ship = (
+        chips = (
             self.small_font.render(
                 (
-                    "CURRENT SHIP: "
-                    + SHIPS[
-                        progress.ship_id
-                    ][
-                        "name"
-                    ]
+                    "NAV CHIPS: "
+                    f"{self.game.progress.nav_chips}"
                 ),
                 True,
                 (
-                    210,
-                    210,
-                    200
+                    100,
+                    220,
+                    230
                 )
             )
         )
 
 
         screen.blit(
-            ship,
-            ship.get_rect(
-                center=(
-                    430,
-                    125
-                )
+            chips,
+            (
+                185,
+                120
             )
         )
 
 
-        # ==================================
-        # STOCK
-        # ==================================
+        y = 165
 
-        if not self.item_ids:
 
-            empty = (
+        for (
+            index,
+            item_id
+        ) in enumerate(
+            self.item_ids
+        ):
+
+            item = (
+                MARKET_ITEMS[
+                    item_id
+                ]
+            )
+
+
+            selected = (
+                index
+                == self.selected
+            )
+
+
+            owned = (
+                self.is_owned(
+                    item_id
+                )
+            )
+
+
+            price = (
+                self.get_price(
+                    item_id
+                )
+            )
+
+
+            if owned:
+
+                price_text = (
+                    "OWNED"
+                )
+
+
+            elif price is None:
+
+                price_text = (
+                    "MAX"
+                )
+
+
+            else:
+
+                price_text = (
+                    f"{price} CR"
+                )
+
+
+            color = (
+
+                (
+                    255,
+                    210,
+                    80
+                )
+
+                if selected
+
+                else (
+                    225,
+                    225,
+                    210
+                )
+            )
+
+
+            prefix = (
+                "> "
+                if selected
+                else "  "
+            )
+
+
+            text = (
                 self.font.render(
-                    "SPECIAL STOCK COMING SOON",
-                    True,
                     (
-                        180,
-                        180,
-                        170
-                    )
+                        prefix
+                        + item[
+                            "name"
+                        ]
+                        + "   "
+                        + price_text
+                    ),
+                    True,
+                    color
                 )
             )
 
 
             screen.blit(
-                empty,
-                empty.get_rect(
-                    center=(
-                        SCREEN_WIDTH // 2,
-                        330
-                    )
+                text,
+                (
+                    175,
+                    y
                 )
             )
 
 
-        else:
-
-            start_y = 185
-
-
-            for (
-                index,
-                item_id
-            ) in enumerate(
-                self.item_ids
-            ):
-
-                item = (
-                    MARKET_ITEMS[
-                        item_id
-                    ]
-                )
-
-
-                price = (
-                    self.get_price(
-                        item
-                    )
-                )
-
-
-                selected = (
-                    index
-                    == self.selected
-                )
-
-
-                color = (
-
-                    (
-                        255,
-                        210,
-                        80
-                    )
-
-                    if selected
-
-                    else (
-                        225,
-                        225,
-                        210
-                    )
-                )
-
-
-                prefix = (
-                    "> "
-                    if selected
-                    else "  "
-                )
-
-
-                text = (
-                    self.font.render(
-                        (
-                            prefix
-                            + item["name"]
-                            + "   $"
-                            + str(price)
-                        ),
-                        True,
-                        color
-                    )
-                )
-
-
-                screen.blit(
-                    text,
-                    (
-                        180,
-                        start_y
-                        + index * 48
-                    )
-                )
-
-
-            item = (
-                self.get_selected_item()
-            )
-
-
-            if item:
-
-                description = (
-                    self.small_font.render(
-                        item[
-                            "description"
-                        ],
-                        True,
-                        (
-                            170,
-                            210,
-                            200
-                        )
-                    )
-                )
-
-
-                screen.blit(
-                    description,
-                    description.get_rect(
-                        center=(
-                            SCREEN_WIDTH // 2,
-                            465
-                        )
-                    )
-                )
+            y += 43
 
 
         if self.message:
@@ -882,7 +1021,7 @@ class MarketScene:
                 message.get_rect(
                     center=(
                         SCREEN_WIDTH // 2,
-                        530
+                        545
                     )
                 )
             )
@@ -891,9 +1030,8 @@ class MarketScene:
         controls = (
             self.small_font.render(
                 (
-                    "UP/DOWN SELECT   "
-                    "B BUY   "
-                    "ENTER RETURN TO MAP"
+                    "UP/DOWN SELECT   ENTER BUY   "
+                    "L LOADOUT   ESC MAP"
                 ),
                 True,
                 (
@@ -910,7 +1048,7 @@ class MarketScene:
             controls.get_rect(
                 center=(
                     SCREEN_WIDTH // 2,
-                    625
+                    635
                 )
             )
         )
